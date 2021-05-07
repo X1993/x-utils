@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
+ * @see <a href="https://github.com/X1993/mybatis-default-statements-register/blob/master/mdsr-core/src/main/java/com/github/ibatis/statement/util/TypeUtils.java">来源</a>
  * @author X1993
  * @date 2020/2/22
  */
