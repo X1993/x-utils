@@ -21,7 +21,7 @@ public class FixedQueue<E> implements Queue<E> {
     private int len = 0;
 
     /**
-     * @param fixed 最大空间数
+     * @param fixed 最大可用空间数
      */
     public FixedQueue(int fixed) {
         if (fixed <= 0){
@@ -36,10 +36,10 @@ public class FixedQueue<E> implements Queue<E> {
     }
 
     /**
-     * 最大空间数
+     * 最大可用空间数
      * @return
      */
-    public int fiexd(){
+    public int fixed(){
         return data.length;
     }
 
