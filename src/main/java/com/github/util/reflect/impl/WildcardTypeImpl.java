@@ -1,4 +1,4 @@
-package com.github.util.reflect;
+package com.github.util.reflect.impl;
 
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;

@@ -1,5 +1,9 @@
 package com.github.util.reflect;
 
+import com.github.util.reflect.impl.GenericArrayTypeImpl;
+import com.github.util.reflect.impl.ParameterizedTypeImpl;
+import com.github.util.reflect.impl.WildcardTypeImpl;
+
 import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.function.Predicate;
