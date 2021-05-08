@@ -20,6 +20,7 @@ public class FixedQueueTest {
         Assert.assertFalse(fixedQueue.isEmpty());
 
         Assert.assertEquals(fixedQueue.get(0).intValue() ,0);
+        Assert.assertEquals(fixedQueue.getFirst().intValue() ,0);
         Assert.assertEquals(fixedQueue.get(1).intValue() ,1);
         Assert.assertNull(fixedQueue.get(2));
 

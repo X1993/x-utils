@@ -82,6 +82,22 @@ public class FixedQueue<E> {
     }
 
     /**
+     * 获取最后一个元素
+     * @return
+     */
+    public E getLast(){
+        return get(len - 1);
+    }
+
+    /**
+     * 获取第一个元素
+     * @return
+     */
+    public E getFirst(){
+        return get(0);
+    }
+
+    /**
      * 按添加顺序生成List
      * @return
      */
