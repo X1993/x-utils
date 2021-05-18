@@ -3,13 +3,13 @@ package com.github.util.reflect;
 import com.github.util.reflect.impl.GenericArrayTypeImpl;
 import com.github.util.reflect.impl.ParameterizedTypeImpl;
 import com.github.util.reflect.impl.WildcardTypeImpl;
-
 import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
+ * {@link Type}解析工具
  * @see <a href="https://github.com/X1993/mybatis-default-statements-register/blob/master/mdsr-core/src/main/java/com/github/ibatis/statement/util/TypeUtils.java">来源</a>
  * @author X1993
  * @date 2020/2/22

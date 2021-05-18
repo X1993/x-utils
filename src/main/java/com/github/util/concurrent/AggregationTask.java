@@ -29,7 +29,7 @@ public class AggregationTask implements Runnable{
     private final AtomicBoolean exclusive = new AtomicBoolean();
 
     /**
-     * 更新标记
+     * 刷新标记
      */
     private volatile boolean refresh = false;
 
@@ -52,11 +52,11 @@ public class AggregationTask implements Runnable{
             }else {
                 //抢占失败，通知抢占线程
                 refresh = true;
-                if (!exclusive.get()){
-                    //可能通知失败
-                    run();
+                if (exclusive.get()){
+                    //另一个线程还在执行中
+                    return;
                 }
-                return;
+                //可能在更新刷新标记的时候另一个线程已经结束了
             }
         }
         //执行任务时有更新，重新执行一次
