@@ -48,7 +48,8 @@ public class AggregationTask<R> implements Callable<R>{
     }
 
     @Override
-    public R call() throws Exception {
+    public R call() throws Exception
+    {
         do {
             if (exclusive.compareAndSet(false ,true)) {
                 //多次通知可以合并执行

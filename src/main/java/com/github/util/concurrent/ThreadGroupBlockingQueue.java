@@ -8,6 +8,8 @@ import java.util.stream.Stream;
 
 /**
  * 线程分组队列，内部是一个队列集合，每个队列由特定线程负责（先抢{@link #getThreadQueue()}先分配，数量有限，抢完为止）
+ *
+ * 注意！不能直接作为{@link ThreadPoolExecutor#workQueue}，因为线程池的机制是没有可用队列才会加入到队列中
  * @Author: X1993
  * @Date: 2021/5/13
  */
