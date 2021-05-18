@@ -18,11 +18,16 @@ public class AggregationTaskTest {
                 e.printStackTrace();
             }
             counter.incrementAndGet();
+            return null;
         });
 
         new Thread(() -> {
             for (int j = 0; j < 5; j++) {
-                aggregationTask.run();
+                try {
+                    aggregationTask.call();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }).start();
 
