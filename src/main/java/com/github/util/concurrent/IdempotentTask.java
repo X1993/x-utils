@@ -5,7 +5,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * 聚合任务
+ * 幂等任务
  *
  * 保证每次{@link #call()}调用之后必然会执行一次{@link #task}（不一定由当前线程执行），多个{@link #call()}调用可能
  * 对应到一次{@link #task}执行
@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @Author: X1993
  * @Date: 2021/4/24
  */
-public class AggregationTask<R> implements Callable<R>{
+public class IdempotentTask<R> implements Callable<R>{
 
     /**
      * 需要执行的任务（支持幂等性）
@@ -34,12 +34,12 @@ public class AggregationTask<R> implements Callable<R>{
      */
     private volatile boolean refresh = false;
 
-    public AggregationTask(Callable<R> task) {
+    public IdempotentTask(Callable<R> task) {
         Objects.requireNonNull(task);
         this.task = task;
     }
 
-    public AggregationTask(Runnable task) {
+    public IdempotentTask(Runnable task) {
         Objects.requireNonNull(task);
         this.task = () -> {
             task.run();

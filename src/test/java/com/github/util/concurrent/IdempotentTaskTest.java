@@ -4,14 +4,14 @@ import org.junit.Assert;
 import org.junit.Test;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class AggregationTaskTest {
+public class IdempotentTaskTest {
 
     @Test
     public void run() throws InterruptedException
     {
         AtomicInteger counter = new AtomicInteger();
         long sleepMs = 500L;
-        AggregationTask aggregationTask = new AggregationTask(() -> {
+        IdempotentTask idempotentTask = new IdempotentTask(() -> {
             try {
                 Thread.sleep(sleepMs);
             } catch (InterruptedException e) {
@@ -24,7 +24,7 @@ public class AggregationTaskTest {
         new Thread(() -> {
             for (int j = 0; j < 5; j++) {
                 try {
-                    aggregationTask.call();
+                    idempotentTask.call();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
