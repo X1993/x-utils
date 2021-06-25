@@ -1,9 +1,10 @@
 package com.github.util.reflect;
 
-import com.github.util.reflect.impl.GenericArrayTypeImpl;
-import com.github.util.reflect.impl.ParameterizedTypeImpl;
 import org.junit.Assert;
 import org.junit.Test;
+import sun.reflect.generics.reflectiveObjects.GenericArrayTypeImpl;
+import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
+
 import java.lang.reflect.*;
 import java.util.*;
 
