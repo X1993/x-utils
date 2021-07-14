@@ -125,7 +125,7 @@ public class WDGImplTest {
     public void performanceTest()
     {
         WDG<Integer ,Float> wdg = new WDGImpl<>();
-        int count = 3000;
+        int count = 1000;
         for (int i = 0; i < count; i = i + 7) {
             for (int j = i + 1; j < count; j = j + 13)
             {
@@ -136,11 +136,18 @@ public class WDGImplTest {
         Assert.assertFalse(wdg.hasNegativeDistance());
         Assert.assertFalse(wdg.hasCycle());
 
-        long currentTimeMillis = System.currentTimeMillis();
-        List<WDG.VertexDistance<Integer, Float>> shortestDistanceByTopologicalSort = wdg.shortestDistanceByTopologicalSort(0);
+        long currentTimeMillis0 = System.currentTimeMillis();
+        List<Integer> topologicalSort = wdg.topologicalSort();
         System.out.println(MessageFormat.format(
-                "shortestDistanceByTopologicalSort time consuming {0} ms" ,
-                System.currentTimeMillis() - currentTimeMillis));
+                "topologicalSort time consuming {0} ms" ,
+                System.currentTimeMillis() - currentTimeMillis0));
+
+        long currentTimeMillis = System.currentTimeMillis();
+        List<WDG.VertexDistance<Integer, Float>> shortestDistanceByTopologicalSort =
+                wdg.shortestDistanceByTopologicalSort(0 ,Integer.MAX_VALUE ,topologicalSort);
+        System.out.println(MessageFormat.format(
+                "shortestDistanceByTopologicalSort time consuming {0} ms ,total {1} ms" ,
+                System.currentTimeMillis() - currentTimeMillis ,System.currentTimeMillis() - currentTimeMillis0));
 
         currentTimeMillis = System.currentTimeMillis();
         List<WDG.VertexDistance<Integer, Float>> shortestDistanceByDijkstra = wdg.shortestDistanceByDijkstra(0);

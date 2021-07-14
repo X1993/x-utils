@@ -3,6 +3,7 @@ package com.github.util;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 加权有向图
@@ -43,6 +44,8 @@ public interface WDG<V ,L> {
      * @param target
      */
     boolean deleteEdge(V source , V target);
+
+    Set<DirectedEdge<V ,L>> getDirectedEdge(V vertex);
 
     /**
      * 是否存在环

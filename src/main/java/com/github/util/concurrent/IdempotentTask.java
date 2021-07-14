@@ -34,17 +34,31 @@ public class IdempotentTask<R> implements Callable<R>{
      */
     private volatile boolean refresh = false;
 
+    /**
+     * 如果抢占失败，是否将标记刷新
+     */
+    private boolean refreshOverExclusive = true;
+
     public IdempotentTask(Callable<R> task) {
         Objects.requireNonNull(task);
         this.task = task;
     }
 
-    public IdempotentTask(Runnable task) {
+    public IdempotentTask(Runnable task)
+    {
         Objects.requireNonNull(task);
         this.task = () -> {
             task.run();
             return null;
         };
+    }
+
+    public boolean isRefreshOverExclusive() {
+        return refreshOverExclusive;
+    }
+
+    public void setRefreshOverExclusive(boolean refreshOverExclusive) {
+        this.refreshOverExclusive = refreshOverExclusive;
     }
 
     @Override
@@ -59,8 +73,8 @@ public class IdempotentTask<R> implements Callable<R>{
                 }finally {
                     exclusive.set(false);
                 }
-            }else {
-                //抢占失败，通知抢占线程
+            }else if (refreshOverExclusive){
+                //抢占失败，通知当前任务执行线程
                 refresh = true;
                 if (exclusive.get()){
                     //另一个线程还在执行中

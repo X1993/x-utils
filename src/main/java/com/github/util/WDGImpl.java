@@ -31,11 +31,12 @@ public class WDGImpl<V ,L> implements WDG<V ,L> {
     @Override
     public boolean deleteEdge(V source, V target)
     {
-        Set<DirectedEdge<V, L>> edges = vertexMap.get(source);
-        if (edges != null && edges.size() > 0){
-            return edges.remove(new DirectedEdge<>(source, target, null));
-        }
-        return false;
+        return getDirectedEdge(source).remove(new DirectedEdge<>(source, target, null));
+    }
+
+    @Override
+    public Set<DirectedEdge<V ,L>> getDirectedEdge(V vertex){
+        return vertexMap.getOrDefault(vertex ,Collections.EMPTY_SET);
     }
 
     @Override
@@ -93,8 +94,7 @@ public class WDGImpl<V ,L> implements WDG<V ,L> {
                     //剪枝
                     if (unTraversedVertexSet.remove(popVertex))
                     {
-                        List<V> nextEntry = vertexMap.getOrDefault(popVertex,
-                                (Set<DirectedEdge<V, L>>) Collections.EMPTY_SET).stream()
+                        List<V> nextEntry = getDirectedEdge(popVertex).stream()
                                 .map(DirectedEdge::getTarget)
                                 .collect(Collectors.toList());
 
@@ -153,32 +153,30 @@ public class WDGImpl<V ,L> implements WDG<V ,L> {
         {
             V vertex = topologicalSort.get(i);
             if (match){
-                Set<DirectedEdge<V, L>> directedEdges = vertexMap.get(vertex);
-                if (directedEdges != null && directedEdges.size() > 0){
-                    for (DirectedEdge<V, L> directedEdge : directedEdges)
-                    {
-                        V edgeSource = directedEdge.getSource();
-                        V edgeTarget = directedEdge.getTarget();
-                        Distance<L> edgeDistance = directedEdge.getDistance();
+                Set<DirectedEdge<V, L>> directedEdges = getDirectedEdge(vertex);
+                for (DirectedEdge<V, L> directedEdge : directedEdges)
+                {
+                    V edgeSource = directedEdge.getSource();
+                    V edgeTarget = directedEdge.getTarget();
+                    Distance<L> edgeDistance = directedEdge.getDistance();
 
-                        if (edgeSource.equals(source)){
-                            vertexMinDistanceMap.put(edgeTarget ,edgeDistance);
-                        }else {
-                            Distance<L> edgeTargetOldMinDistance = vertexMinDistanceMap.get(edgeTarget);
-                            Distance<L> edgeSourceOldMinDistance = vertexMinDistanceMap.get(edgeSource);
+                    if (edgeSource.equals(source)){
+                        vertexMinDistanceMap.put(edgeTarget ,edgeDistance);
+                    }else {
+                        Distance<L> edgeTargetOldMinDistance = vertexMinDistanceMap.get(edgeTarget);
+                        Distance<L> edgeSourceOldMinDistance = vertexMinDistanceMap.get(edgeSource);
 
-                            Distance<L> edgeTargetNewMinDistance = edgeTargetOldMinDistance;
-                            if (edgeSourceOldMinDistance != null){
-                                edgeTargetNewMinDistance = edgeSourceOldMinDistance.add(edgeDistance);
+                        Distance<L> edgeTargetNewMinDistance = edgeTargetOldMinDistance;
+                        if (edgeSourceOldMinDistance != null){
+                            edgeTargetNewMinDistance = edgeSourceOldMinDistance.add(edgeDistance);
 
-                                if (edgeTargetOldMinDistance != null) {
-                                    edgeTargetNewMinDistance = edgeTargetNewMinDistance.compareTo(edgeTargetOldMinDistance)
-                                            < 0 ? edgeTargetNewMinDistance : edgeTargetOldMinDistance;
-                                }
+                            if (edgeTargetOldMinDistance != null) {
+                                edgeTargetNewMinDistance = edgeTargetNewMinDistance.compareTo(edgeTargetOldMinDistance)
+                                        < 0 ? edgeTargetNewMinDistance : edgeTargetOldMinDistance;
                             }
-
-                            vertexMinDistanceMap.put(edgeTarget ,edgeTargetNewMinDistance);
                         }
+
+                        vertexMinDistanceMap.put(edgeTarget ,edgeTargetNewMinDistance);
                     }
                 }
             } else if (vertex.equals(source))
@@ -209,7 +207,7 @@ public class WDGImpl<V ,L> implements WDG<V ,L> {
         List<VertexDistance<V, L>> nearestVertex = new LinkedList<>();
         Set<V> traversal = new HashSet<>();
 
-        for (DirectedEdge<V, L> edge : vertexMap.get(source)) {
+        for (DirectedEdge<V, L> edge : getDirectedEdge(source)) {
             minimumHeap.add(new VertexDistance(edge.getTarget() ,edge.getDistance()));
         }
         traversal.add(source);
@@ -228,14 +226,11 @@ public class WDGImpl<V ,L> implements WDG<V ,L> {
             traversal.add(vertex);
 
             Distance<L> shortestDistance = nearest.getDistance();
-            Set<DirectedEdge<V, L>> directedEdges = vertexMap.get(vertex);
-            if (directedEdges != null && directedEdges.size() > 0) {
-                for (DirectedEdge<V, L> edge : vertexMap.get(vertex)) {
-                    if (traversal.contains(edge.getTarget())) {
-                        continue;
-                    }
-                    minimumHeap.add(new VertexDistance<>(edge.getTarget(), shortestDistance.add(edge.getDistance())));
+            for (DirectedEdge<V, L> edge : getDirectedEdge(vertex)) {
+                if (traversal.contains(edge.getTarget())) {
+                    continue;
                 }
+                minimumHeap.add(new VertexDistance<>(edge.getTarget(), shortestDistance.add(edge.getDistance())));
             }
         }
 
