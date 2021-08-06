@@ -1,4 +1,4 @@
-package com.github.util;
+package com.github.util.graph;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 /**
  * 加权有向图实现
- * @Author: junjie
+ * @Author: jie
  * @Date: 2019/7/24
  */
 public class WDGImpl<V ,L> implements WDG<V ,L> {

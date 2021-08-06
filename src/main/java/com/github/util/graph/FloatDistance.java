@@ -1,10 +1,10 @@
-package com.github.util;
+package com.github.util.graph;
 
 import lombok.Data;
 
 /**
  * 使用float类型数值代表距离
- * @Author: junjie
+ * @Author: jie
  * @Date: 2019/7/24
  */
 @Data

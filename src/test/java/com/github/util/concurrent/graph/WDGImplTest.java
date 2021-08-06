@@ -1,10 +1,12 @@
-package com.github.util;
+package com.github.util.concurrent.graph;
 
+import com.github.util.graph.FloatDistance;
+import com.github.util.graph.WDG;
+import com.github.util.graph.WDGImpl;
 import org.junit.Assert;
 import org.junit.Test;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class WDGImplTest {
 
@@ -58,7 +60,7 @@ public class WDGImplTest {
     private void testShortestDistance(List<WDG.VertexDistance<Integer, Float>> shortestDistance)
     {
         for (WDG.VertexDistance<Integer, Float> vd : shortestDistance) {
-            System.out.println("key:" + vd.getVertex() + ";distance:" + vd.distance.get());
+            System.out.println("key:" + vd.getVertex() + ";distance:" + vd.getDistance().get());
         }
 
         List<WDG.VertexDistance<Integer, Float>> expected = new ArrayList<>(5);

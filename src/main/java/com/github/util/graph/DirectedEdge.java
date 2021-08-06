@@ -1,4 +1,4 @@
-package com.github.util;
+package com.github.util.graph;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -6,7 +6,7 @@ import java.util.Objects;
 
 /**
  * 有向边
- * @Author: junjie
+ * @Author: jie
  * @Date: 2019/7/24
  */
 @AllArgsConstructor

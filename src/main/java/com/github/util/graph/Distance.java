@@ -1,8 +1,8 @@
-package com.github.util;
+package com.github.util.graph;
 
 /**
  * 距离
- * @Author: junjie
+ * @Author: jie
  * @Date: 2019/7/24
  */
 public interface Distance<T> extends Comparable<Distance<T>> {

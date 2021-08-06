@@ -1,4 +1,4 @@
-package com.github.util;
+package com.github.util.graph;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +7,7 @@ import java.util.Set;
 
 /**
  * 加权有向图
- * @Author: junjie
+ * @Author: jie
  * @Date: 2019/7/24
  */
 public interface WDG<V ,L> {
