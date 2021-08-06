@@ -20,4 +20,20 @@ public class Locker<K> {
      */
     private int priority;
 
+    private PreemptCallback preemptCallback;
+
+    /**
+     * 当锁被高优先级Locker抢占时回调
+     * @param <K>
+     */
+    interface PreemptCallback<K>{
+
+        /**
+         * 执行
+         * @param preemptLocker
+         */
+        void preempt(Locker<K> preemptLocker);
+
+    }
+
 }

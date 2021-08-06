@@ -5,14 +5,14 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * 幂等任务
+ * 通知触发幂等任务
  *
  * 保证每次{@link #call()}调用之后必然会执行一次{@link #task}（不一定由当前线程执行），多个{@link #call()}调用可能
  * 对应到一次{@link #task}执行
  *
- *  例如：监听变化，一种实现是周期轮询，如果变化频率小，那么执行效率低。另外一种实现是通知唤醒，如果{@link #task}执行的比较慢，
- * 可能执行n次{@link #call()}调用后{@link #task}才执行完一次，此时n-1次{@link #task}已经没有执行的必要。此时使用当前方案
- * 或许是一种更好的实现
+ *  例如：监听变化，一种实现是周期轮询，如果变化频率小，那么执行效率低。另外一种实现是通知唤醒task执行，
+ *  如果{@link #task}执行的比较慢，可能执行n次{@link #call()}调用后{@link #task}才执行完一次，此时
+ *  n-1次{@link #task}已经没有执行的必要。此时使用当前方案许是一种更好的实现
  *
  * @Author: X1993
  * @Date: 2021/4/24

@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * 可抢占的优先级锁，并不是传统意义上的阻塞线程，仅仅记录锁的占有者，如果支持高优先级抢占
  * {@link PreemptivePriorityLock#preemptive} == true，所以即使某个线程获取了锁，也有
- * 可能会在unlock前失去锁，需要配合检查点使用
+ * 可能会在unlock前失去锁，需要在代码中配合检查点使用（当然也可以改造成传统的阻塞模式）
  *
  * @Author: jie
  * @Date: 2021/8/6
@@ -56,6 +56,10 @@ public class PreemptivePriorityLock<K> {
             }else if (preemptive && locker.getPriority() > oldLocker.getPriority()) {
                 // 更高优先级
                 if (lockMark.compareAndSet(oldLocker ,locker)){
+                    Locker.PreemptCallback preemptCallback = oldLocker.getPreemptCallback();
+                    if (preemptCallback != null){
+                        preemptCallback.preempt(locker);
+                    }
                     return true;
                 }
             }else {
