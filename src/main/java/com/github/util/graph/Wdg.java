@@ -43,6 +43,11 @@ public interface Wdg<V> {
      */
     boolean deleteEdge(V source , V target);
 
+    /**
+     * 获取某个顶点所有相邻边
+     * @param vertex
+     * @return
+     */
     Set<DirectedEdge<V>> getDirectedEdge(V vertex);
 
     /**
