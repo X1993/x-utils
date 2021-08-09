@@ -26,7 +26,7 @@ public class VertexDistance<T> implements Comparable<VertexDistance<T>>{
     @Override
     public int compareTo(VertexDistance<T> o) {
         float v = getDistance() - o.getDistance();
-        return v > 0 ? 1 : v == 0 ? 0 : -1;
+        return v > 0 ? 1 : (v == 0 ? 0 : -1);
     }
 
 }

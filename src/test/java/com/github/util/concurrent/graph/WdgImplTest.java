@@ -158,7 +158,11 @@ public class WdgImplTest {
                 System.currentTimeMillis() - currentTimeMillis));
 
         Comparator<VertexDistance<Integer>> comparator = (vd1 ,vd2) -> {
-            return vd1.compareTo(vd2);
+            float v = vd1.getDistance() - vd2.getDistance();
+            if (v == 0){
+                return vd1.getVertex().compareTo(vd2.getVertex());
+            }
+            return v > 0 ? 1 : -1;
         };
 
         shortestDistanceByDijkstra.sort(comparator);
@@ -167,7 +171,7 @@ public class WdgImplTest {
         for (int i = 0; i < shortestDistanceByDijkstra.size(); i++) {
             VertexDistance<Integer> vd1 = shortestDistanceByDijkstra.get(i);
             VertexDistance<Integer> vd2 = shortestDistanceByTopologicalSort.get(i);
-            Assert.assertEquals(vd1.getDistance() ,vd2.getDistance());
+            Assert.assertTrue(vd1.getDistance()  == vd2.getDistance());
             Assert.assertEquals(vd1.getVertex() ,vd2.getVertex());
         }
     }

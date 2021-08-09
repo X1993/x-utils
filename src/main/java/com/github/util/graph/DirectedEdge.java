@@ -30,9 +30,12 @@ public final class DirectedEdge<V> implements Comparable<DirectedEdge<V>>{
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         DirectedEdge<?> that = (DirectedEdge<?>) o;
         return Objects.equals(source, that.source) &&
                 Objects.equals(target, that.target);
@@ -40,12 +43,12 @@ public final class DirectedEdge<V> implements Comparable<DirectedEdge<V>>{
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), source, target);
+        return Objects.hash(source, target);
     }
 
     @Override
     public int compareTo(DirectedEdge<V> edge) {
         float v = getDistance() - edge.getDistance();
-        return v > 0 ? 1 : v == 0 ? 0 : -1;
+        return v > 0 ? 1 : (v == 0 ? 0 : -1);
     }
 }

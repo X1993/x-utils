@@ -54,12 +54,12 @@ public class WdgImpl<V> implements Wdg<V> {
                         .anyMatch(edge -> edge.getDistance() < 0));
     }
 
-    private boolean hasCycle(Consumer<V> stackPopConsumer)
+    private boolean hasCycle(Consumer<V> stackPopCallback)
     {
         Set<V> unTraversedVertexSet = new HashSet<>(vertexMap.keySet());
 
         V currentVertex = null;
-        //dfs
+        //dfs,用循环模拟递归
         while ((currentVertex = unTraversedVertexSet.stream().findAny().orElse(null)) != null)
         {
             Stack<List<V>> methodStack = new Stack<>();
@@ -83,7 +83,7 @@ public class WdgImpl<V> implements Wdg<V> {
                     }
                     V popVertex = traversingVertexStack.pop();
                     if (popVertex != null){
-                        stackPopConsumer.accept(popVertex);
+                        stackPopCallback.accept(popVertex);
                         traversingVertexSet.remove(popVertex);
                     }
                 }else {
