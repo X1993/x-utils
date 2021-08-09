@@ -1,7 +1,5 @@
 package com.github.util.graph;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import java.util.List;
 import java.util.Set;
 
@@ -10,7 +8,7 @@ import java.util.Set;
  * @Author: jie
  * @Date: 2019/7/24
  */
-public interface WDG<V ,L> {
+public interface Wdg<V> {
 
     /**
      * 添加顶点
@@ -25,7 +23,7 @@ public interface WDG<V ,L> {
      * @param target
      * @param distance
      */
-    boolean addEdge(V source, V target, Distance<L> distance);
+    boolean addEdge(V source, V target, float distance);
 
     /**
      * 添加两条双向的有向边
@@ -33,7 +31,7 @@ public interface WDG<V ,L> {
      * @param v2
      * @param distance
      */
-    default void addBilateralEdge(V v1, V v2, Distance<L> distance){
+    default void addBilateralEdge(V v1, V v2, float distance){
         addEdge(v1 ,v2 ,distance);
         addEdge(v2, v1, distance);
     }
@@ -45,7 +43,7 @@ public interface WDG<V ,L> {
      */
     boolean deleteEdge(V source , V target);
 
-    Set<DirectedEdge<V ,L>> getDirectedEdge(V vertex);
+    Set<DirectedEdge<V>> getDirectedEdge(V vertex);
 
     /**
      * 是否存在环
@@ -71,9 +69,9 @@ public interface WDG<V ,L> {
      * @param num 只返回最近num个相邻点
      * @return
      */
-    List<VertexDistance<V ,L>> shortestDistance(V source, int num);
+    List<VertexDistance<V>> shortestDistance(V source, int num);
 
-    default List<VertexDistance<V ,L>> shortestDistance(V source){
+    default List<VertexDistance<V>> shortestDistance(V source){
         return shortestDistance(source ,Integer.MAX_VALUE);
     }
 
@@ -84,13 +82,13 @@ public interface WDG<V ,L> {
      * @param topologicalSort 拓扑排序结果集
      * @return
      */
-    List<VertexDistance<V, L>> shortestDistanceByTopologicalSort(V source, int num, List<V> topologicalSort);
+    List<VertexDistance<V>> shortestDistanceByTopologicalSort(V source, int num, List<V> topologicalSort);
 
-    default List<VertexDistance<V, L>> shortestDistanceByTopologicalSort(V source, int num){
+    default List<VertexDistance<V>> shortestDistanceByTopologicalSort(V source, int num){
         return shortestDistanceByTopologicalSort(source ,num ,topologicalSort());
     }
 
-    default List<VertexDistance<V ,L>> shortestDistanceByTopologicalSort(V source){
+    default List<VertexDistance<V>> shortestDistanceByTopologicalSort(V source){
         return shortestDistanceByTopologicalSort(source ,Integer.MAX_VALUE);
     }
 
@@ -100,35 +98,10 @@ public interface WDG<V ,L> {
      * @param num 只返回最近num个相邻点
      * @return
      */
-    List<VertexDistance<V, L>> shortestDistanceByDijkstra(V source, int num);
+    List<VertexDistance<V>> shortestDistanceByDijkstra(V source, int num);
 
-    default List<VertexDistance<V ,L>> shortestDistanceByDijkstra(V source){
+    default List<VertexDistance<V>> shortestDistanceByDijkstra(V source){
         return shortestDistanceByDijkstra(source ,Integer.MAX_VALUE);
-    }
-
-    /**
-     * 保存相邻点及距离
-     * @param <T>
-     * @param <L>
-     */
-    @AllArgsConstructor
-    @Data
-    class VertexDistance<T ,L> implements Comparable<VertexDistance<T ,L>>{
-
-        /**
-         * 相邻点
-         */
-        final T vertex;
-
-        /**
-         * 距离
-         */
-        final Distance<L> distance;
-
-        @Override
-        public int compareTo(VertexDistance<T, L> o) {
-            return distance.compareTo(o.distance);
-        }
     }
 
 }

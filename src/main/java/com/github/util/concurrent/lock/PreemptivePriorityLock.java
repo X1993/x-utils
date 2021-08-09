@@ -1,6 +1,7 @@
 package com.github.util.concurrent.lock;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 /**
  * 可抢占的优先级锁，并不是传统意义上的阻塞线程，仅仅记录锁的占有者，如果支持高优先级抢占
@@ -10,7 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @Author: jie
  * @Date: 2021/8/6
  */
-public class PreemptivePriorityLock<K> {
+public class PreemptivePriorityLock<K> extends AbstractQueuedSynchronizer{
 
     /**
      * 当前占用锁的人
@@ -32,7 +33,7 @@ public class PreemptivePriorityLock<K> {
     }
 
     /**
-     * 尝试抢占锁
+     * 尝试抢占锁，非阻塞
      * @param locker
      * @return
      */

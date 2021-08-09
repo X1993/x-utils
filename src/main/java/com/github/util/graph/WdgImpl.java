@@ -9,12 +9,12 @@ import java.util.stream.Collectors;
  * @Author: jie
  * @Date: 2019/7/24
  */
-public class WDGImpl<V ,L> implements WDG<V ,L> {
+public class WdgImpl<V> implements Wdg<V> {
 
     /**
      * 点-相邻点 集
      */
-    private final Map<V ,Set<DirectedEdge<V ,L>>> vertexMap = new HashMap<>();
+    private final Map<V ,Set<DirectedEdge<V>>> vertexMap = new HashMap<>();
 
     @Override
     public boolean addVertex(V vertex) {
@@ -22,7 +22,7 @@ public class WDGImpl<V ,L> implements WDG<V ,L> {
     }
 
     @Override
-    public boolean addEdge(V source, V target, Distance<L> distance)
+    public boolean addEdge(V source, V target, float distance)
     {
         addVertex(target);
         return vertexMap.computeIfAbsent(source, s -> new HashSet<>()).add(new DirectedEdge<>(source, target, distance));
@@ -31,11 +31,11 @@ public class WDGImpl<V ,L> implements WDG<V ,L> {
     @Override
     public boolean deleteEdge(V source, V target)
     {
-        return getDirectedEdge(source).remove(new DirectedEdge<>(source, target, null));
+        return getDirectedEdge(source).remove(new DirectedEdge<>(source, target, 0));
     }
 
     @Override
-    public Set<DirectedEdge<V ,L>> getDirectedEdge(V vertex){
+    public Set<DirectedEdge<V>> getDirectedEdge(V vertex){
         return vertexMap.getOrDefault(vertex ,Collections.EMPTY_SET);
     }
 
@@ -51,7 +51,7 @@ public class WDGImpl<V ,L> implements WDG<V ,L> {
         return vertexMap.values()
                 .stream()
                 .anyMatch(set -> set.stream()
-                        .anyMatch(edge -> edge.getDistance().isNegative()));
+                        .anyMatch(edge -> edge.getDistance() < 0));
     }
 
     private boolean hasCycle(Consumer<V> stackPopConsumer)
@@ -128,7 +128,7 @@ public class WDGImpl<V ,L> implements WDG<V ,L> {
     }
 
     @Override
-    public List<VertexDistance<V, L>> shortestDistance(V source, int num)
+    public List<VertexDistance<V>> shortestDistance(V source, int num)
     {
         if (!hasNegativeDistance()){
             return shortestDistanceByDijkstra(source ,num);
@@ -143,9 +143,9 @@ public class WDGImpl<V ,L> implements WDG<V ,L> {
     }
 
     @Override
-    public List<VertexDistance<V ,L>> shortestDistanceByTopologicalSort(V source, int num ,List<V> topologicalSort)
+    public List<VertexDistance<V>> shortestDistanceByTopologicalSort(V source, int num ,List<V> topologicalSort)
     {
-        Map<V ,Distance<L>> vertexMinDistanceMap = new HashMap<>(vertexMap.size());
+        Map<V ,Float> vertexMinDistanceMap = new HashMap<>(vertexMap.size());
         boolean match = false;
 
         int size = topologicalSort.size();
@@ -153,22 +153,22 @@ public class WDGImpl<V ,L> implements WDG<V ,L> {
         {
             V vertex = topologicalSort.get(i);
             if (match){
-                Set<DirectedEdge<V, L>> directedEdges = getDirectedEdge(vertex);
-                for (DirectedEdge<V, L> directedEdge : directedEdges)
+                Set<DirectedEdge<V>> directedEdges = getDirectedEdge(vertex);
+                for (DirectedEdge<V> directedEdge : directedEdges)
                 {
                     V edgeSource = directedEdge.getSource();
                     V edgeTarget = directedEdge.getTarget();
-                    Distance<L> edgeDistance = directedEdge.getDistance();
+                    float edgeDistance = directedEdge.getDistance();
 
                     if (edgeSource.equals(source)){
                         vertexMinDistanceMap.put(edgeTarget ,edgeDistance);
                     }else {
-                        Distance<L> edgeTargetOldMinDistance = vertexMinDistanceMap.get(edgeTarget);
-                        Distance<L> edgeSourceOldMinDistance = vertexMinDistanceMap.get(edgeSource);
+                        Float edgeTargetOldMinDistance = vertexMinDistanceMap.get(edgeTarget);
+                        Float edgeSourceOldMinDistance = vertexMinDistanceMap.get(edgeSource);
 
-                        Distance<L> edgeTargetNewMinDistance = edgeTargetOldMinDistance;
+                        Float edgeTargetNewMinDistance = edgeTargetOldMinDistance;
                         if (edgeSourceOldMinDistance != null){
-                            edgeTargetNewMinDistance = edgeSourceOldMinDistance.add(edgeDistance);
+                            edgeTargetNewMinDistance = edgeSourceOldMinDistance + edgeDistance;
 
                             if (edgeTargetOldMinDistance != null) {
                                 edgeTargetNewMinDistance = edgeTargetNewMinDistance.compareTo(edgeTargetOldMinDistance)
@@ -186,33 +186,33 @@ public class WDGImpl<V ,L> implements WDG<V ,L> {
             }
         }
 
-        List<VertexDistance<V ,L>> vertexDistances = new ArrayList<>(vertexMinDistanceMap.size());
+        List<VertexDistance<V>> vertexDistances = new ArrayList<>(vertexMinDistanceMap.size());
         vertexDistances.remove(source);
-        for (Map.Entry<V, Distance<L>> entry : vertexMinDistanceMap.entrySet()) {
+        for (Map.Entry<V, Float> entry : vertexMinDistanceMap.entrySet()) {
             vertexDistances.add(new VertexDistance(entry.getKey() ,entry.getValue()));
         }
 
-        vertexDistances.sort((vt1 ,vt2) -> vt1.getDistance().compareTo(vt2.getDistance()));
+        vertexDistances.sort((vt1 ,vt2) -> vt1.compareTo(vt2));
         return vertexDistances;
     }
 
     @Override
-    public List<VertexDistance<V ,L>> shortestDistanceByDijkstra(V source, int num)
+    public List<VertexDistance<V>> shortestDistanceByDijkstra(V source, int num)
     {
         if (hasNegativeDistance()){
             throw new IllegalStateException("has negative distance");
         }
 
-        PriorityQueue<VertexDistance<V ,L>> minimumHeap = new PriorityQueue<>();
-        List<VertexDistance<V, L>> nearestVertex = new LinkedList<>();
+        PriorityQueue<VertexDistance<V>> minimumHeap = new PriorityQueue<>();
+        List<VertexDistance<V>> nearestVertex = new LinkedList<>();
         Set<V> traversal = new HashSet<>();
 
-        for (DirectedEdge<V, L> edge : getDirectedEdge(source)) {
+        for (DirectedEdge<V> edge : getDirectedEdge(source)) {
             minimumHeap.add(new VertexDistance(edge.getTarget() ,edge.getDistance()));
         }
         traversal.add(source);
 
-        VertexDistance<V, L> nearest = null;
+        VertexDistance<V> nearest = null;
         while ((nearest = minimumHeap.poll()) != null){
             V vertex = nearest.getVertex();
             if (traversal.contains(vertex)) {
@@ -225,12 +225,12 @@ public class WDGImpl<V ,L> implements WDG<V ,L> {
             }
             traversal.add(vertex);
 
-            Distance<L> shortestDistance = nearest.getDistance();
-            for (DirectedEdge<V, L> edge : getDirectedEdge(vertex)) {
+            float shortestDistance = nearest.getDistance();
+            for (DirectedEdge<V> edge : getDirectedEdge(vertex)) {
                 if (traversal.contains(edge.getTarget())) {
                     continue;
                 }
-                minimumHeap.add(new VertexDistance<>(edge.getTarget(), shortestDistance.add(edge.getDistance())));
+                minimumHeap.add(new VertexDistance<>(edge.getTarget(), shortestDistance + edge.getDistance()));
             }
         }
 

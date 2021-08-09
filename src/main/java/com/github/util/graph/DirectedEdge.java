@@ -11,7 +11,7 @@ import java.util.Objects;
  */
 @AllArgsConstructor
 @Data
-public final class DirectedEdge<V ,L> implements Comparable<DirectedEdge<V ,L>>{
+public final class DirectedEdge<V> implements Comparable<DirectedEdge<V>>{
 
     /**
      * 起始点
@@ -26,24 +26,26 @@ public final class DirectedEdge<V ,L> implements Comparable<DirectedEdge<V ,L>>{
     /**
      * 距离
      */
-    final private Distance<L> distance;
+    final private float distance;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        DirectedEdge<?, ?> that = (DirectedEdge<?, ?>) o;
+        if (!super.equals(o)) return false;
+        DirectedEdge<?> that = (DirectedEdge<?>) o;
         return Objects.equals(source, that.source) &&
                 Objects.equals(target, that.target);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(source, target);
+        return Objects.hash(super.hashCode(), source, target);
     }
 
     @Override
-    public int compareTo(DirectedEdge<V, L> edge) {
-        return this.getDistance().compareTo(edge.getDistance());
+    public int compareTo(DirectedEdge<V> edge) {
+        float v = getDistance() - edge.getDistance();
+        return v > 0 ? 1 : v == 0 ? 0 : -1;
     }
 }
