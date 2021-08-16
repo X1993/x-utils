@@ -8,10 +8,12 @@ import java.util.function.Predicate;
  *
  * 使用定长数组和头指针实现
  * @param <E>
- *
  * @author X1993
  * @date 2021-05-08
+ *
+ * @deprecated java类库已有相似实现 {@link java.util.concurrent.ArrayBlockingQueue}
  */
+@Deprecated
 public class FixedQueue<E> implements Queue<E> {
 
     private final Object[] data;
