@@ -9,7 +9,8 @@ import java.util.stream.Stream;
 
 /**
  * {@link Type}解析工具
- * @see <a href="https://github.com/X1993/mybatis-default-statements-register/blob/master/mdsr-core/src/main/java/com/github/ibatis/statement/util/TypeUtils.java">在开发mybatis-default-statements-register项目时编写</a>
+ * 使用方式可以参考注释或者单元测试
+ * <a href="https://github.com/X1993/mybatis-default-statements-register/blob/master/mdsr-core/src/main/java/com/github/ibatis/statement/util/TypeUtils.java">在开发mdsr项目时编写</a>
  * @author X1993
  * @date 2020/2/22
  */
