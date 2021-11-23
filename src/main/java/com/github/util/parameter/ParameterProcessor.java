@@ -1,34 +1,32 @@
 package com.github.util.parameter;
 
 import com.github.util.reflect.TypeUtils;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 方法参数{@link Parameter}处理器
  * @author jie
  * @date 2021/11/18
- * @description 可以通过切面拦截方法对参数做一些自定义处理
+ * @description
  */
 @Slf4j
 public class ParameterProcessor {
     
     private final List<ProcessWrapper> processWrappers;
 
-    public ParameterProcessor(List<? extends ParameterAnnotationProcess> valueProcesses)
+    public ParameterProcessor(List<? extends ParameterAnnotationProcess> parameterAnnotationProcesses)
     {
-        this.processWrappers = valueProcesses
+        this.processWrappers = parameterAnnotationProcesses
                 .stream()
                 .sorted((p0, p1) -> p0.order() - p1.order())
                 //排序
@@ -36,54 +34,17 @@ public class ParameterProcessor {
                 .collect(Collectors.toList());
     }
 
-    private final PropertyParseProcessor propertyParseProcessor = new PropertyParseProcessor(
-            new PropertyParseProcessor.Strategy() {
-
-                @Override
-                public <T> T execute(Field field, T fieldValue ,String propertyLocationMessage)
-                {
-                    return ParameterProcessor.this.annotationMatchAndValueProcess(
-                            field.getAnnotations() ,
-                            field.getGenericType(),
-                            fieldValue,
-                            propertyLocationMessage
-                    );
-                }
-
-            });
-
-    private <T> T annotationMatchAndValueProcess(Annotation[] annotations ,Type valueType ,T value ,Object location)
-    {
-        for (Annotation annotation : annotations) {
-            for (ProcessWrapper valueProcessWrapper : processWrappers) {
-                if (valueProcessWrapper.getAnnotationType() == annotation.annotationType()){
-                    if (TypeUtils.isAssignableFrom(valueProcessWrapper.getValueType() ,valueType)){
-                        ParameterAnnotationProcess valueProcess = valueProcessWrapper.getValueProcess();
-                        try {
-                            return (T) valueProcess.execute(value ,annotation);
-                        } catch (Exception e){
-                            log.error("parameter {} process exception ,valueProcess:{} ,parameter value:{}" ,
-                                    location ,valueProcess ,value);
-                            throw e;
-                        }
-                    }
-                }
-            }
-        }
-        return value;
-    }
-
     /**
      * 方法参数是否需要处理
      * @param parameter
      * @return
      */
-    public boolean supports(Parameter parameter)
+    public boolean match(Parameter parameter)
     {
         Annotation[] annotations = parameter.getAnnotations();
         for (Annotation annotation : annotations) {
             if (annotation.annotationType() == PropertyProcess.class){
-                //实体类属性需要处理
+                //parameter属性需要处理
                 return true;
             }
         }
@@ -97,7 +58,7 @@ public class ParameterProcessor {
 
         for (Annotation annotation : annotations) {
             if (matchAnnotations.contains(annotation.annotationType())){
-                //直接处理
+                //直接处理parameter
                 return true;
             }
         }
@@ -107,26 +68,180 @@ public class ParameterProcessor {
 
     /**
      * 处理方法参数
-     * @param body
+     * @param parameterValue
      * @param parameter
      * @return
      */
-    public Object process(Object body, Parameter parameter)
+    public Object process(Object parameterValue ,Parameter parameter)
     {
-        if (parameter.getAnnotation(PropertyProcess.class) != null) {
-            //实体类属性需要处理
-            propertyParseProcessor.parseMatchPropertyAndProcess(body);
-            return body;
+        return parseAndProcess(parameterValue ,new PropertyLocation() ,
+                Stream.of(parameter.getAnnotations()).collect(Collectors.toSet()));
+    }
+
+    /**
+     * 解析处理符合条件的值
+     * @param value
+     * @param propertyLocation 当前分析的属性位置，便于定位
+     * @param annotationSet
+     */
+    private Object parseAndProcess(Object value ,PropertyLocation propertyLocation ,Set<Annotation> annotationSet)
+    {
+        if (value == null){
+            return null;
         }
-        //尝试直接处理body。例如 @RequestBody String str
-        return annotationMatchAndValueProcess(parameter.getAnnotations() ,
-                parameter.getParameterizedType(), body ,parameter);
+
+        Class<?> targetClass = value.getClass();
+        if (Collection.class.isAssignableFrom(targetClass)){
+            //集合元素处理
+            Collection collection = (Collection) value;
+            List tmpList = new ArrayList(collection.size());
+            int i = 0;
+            for (Object element : (Iterable) value) {
+                propertyLocation.element(i++);
+                Object newElement = parseAndProcess(element ,propertyLocation ,annotationSet);
+                tmpList.add(newElement);
+                propertyLocation.pop();
+            }
+            collection.clear();
+            collection.addAll(tmpList);
+            return collection;
+        } else if (targetClass.isArray()){
+            //数组元素处理
+            Object[] array = (Object[]) value;
+            int length = array.length;
+            for (int i = 0; i < length; i++) {
+                propertyLocation.element(i);
+                Object newElement = parseAndProcess(array[i] ,propertyLocation ,annotationSet);
+                array[i] = newElement;
+                propertyLocation.pop();
+            }
+            return array;
+        } else if (Map.class.isAssignableFrom(targetClass)) {
+            Map map = (Map) value;
+            //map value 处理
+            for (Map.Entry<?, ?> entry : ((Map<? ,?>) value).entrySet()) {
+                Object key = entry.getKey();
+                Object mapValue = entry.getValue();
+
+                propertyLocation.map(key);
+                Object newElement = parseAndProcess(mapValue ,propertyLocation ,annotationSet);
+                map.put(key ,newElement);
+                propertyLocation.pop();
+            }
+            return map;
+        }
+
+        //需要嵌套解析
+        boolean isPropertyProcess = annotationSet.stream()
+                .anyMatch(annotation -> PropertyProcess.class.equals(annotation.annotationType()));
+
+        if (isPropertyProcess){
+            List<Field> nonStaticFields = getNonStaticFields(targetClass);
+            for (Field nonStaticField : nonStaticFields) {
+                propertyLocation.property(nonStaticField.getName());
+                boolean accessible = nonStaticField.isAccessible();
+                try {
+                    if (!accessible) {
+                        nonStaticField.setAccessible(true);
+                    }
+
+                    Object fieldValue = nonStaticField.get(value);
+                    Object newFieldValue = parseAndProcess(fieldValue, propertyLocation,
+                            Stream.of(nonStaticField.getAnnotations()).collect(Collectors.toSet()));
+                    if (fieldValue != newFieldValue){
+                        nonStaticField.set(value ,newFieldValue);
+                    }
+                } catch (IllegalAccessException e) {
+                    throw new IllegalStateException(e);
+                } finally {
+                    if (!accessible) {
+                        nonStaticField.setAccessible(false);
+                    }
+                }
+                propertyLocation.pop();
+            }
+            return value;
+        } else {
+            for (Annotation annotation : annotationSet) {
+                for (ProcessWrapper valueProcessWrapper : processWrappers) {
+                    if (valueProcessWrapper.getAnnotationType() == annotation.annotationType()){
+                        if (TypeUtils.isAssignableFrom(valueProcessWrapper.getValueType() ,value.getClass())){
+                            ParameterAnnotationProcess valueProcess = valueProcessWrapper.getValueProcess();
+                            try {
+                                return valueProcess.execute(value ,annotation);
+                            }catch (Exception e){
+                                log.error("parameter {} process exception ,valueProcess:{} ,parameter value:{}" ,
+                                        propertyLocation ,valueProcess ,value);
+                                throw e;
+                            }
+                        }
+                    }
+                }
+            }
+            return value;
+        }
+    }
+
+    /**
+     * 解析类字段，按字段定义的顺序 （父类 先于 子类 ，定义在前 先于 定义在后）
+     * @param clazz
+     * @return
+     */
+    private List<Field> getNonStaticFields(Class<?> clazz)
+    {
+        if (clazz == null || clazz.isInterface()
+                || clazz.getClassLoader() == null || clazz.getClassLoader().getParent() == null)
+        {
+            return Collections.EMPTY_LIST;
+        }
+        List<Field> fields = new ArrayList<>();
+        fields.addAll(getNonStaticFields(clazz.getSuperclass()));
+        for (Field field : clazz.getDeclaredFields()) {
+            if (!Modifier.isStatic(field.getModifiers())) {
+                fields.add(field);
+            }
+        }
+        return fields;
+    }
+
+    private class PropertyLocation {
+
+        private final Stack<String> locations = new Stack<>();
+
+        private void property(String propertyName){
+            locations.push("." + propertyName);
+        }
+
+        private void set(Object element){
+            locations.push("(set:" + element + ")");
+        }
+
+        private void map(Object mapKey){
+            locations.push("(map:" + mapKey + ")");
+        }
+
+        private void element(int index){
+            locations.push("[" + index + "]");
+        }
+
+        private void pop(){
+            locations.pop();
+        }
+
+        private String locationMessage(){
+            Collections.reverse(locations);
+            String txt = locations.stream().collect(Collectors.joining());
+            if (txt.startsWith(".")){
+                txt = txt.substring(1 ,txt.length());
+            }
+            return txt;
+        }
+
     }
 
     /**
      * 主要是避免重复解析
      */
-    @Data
     private class ProcessWrapper {
 
         private final ParameterAnnotationProcess valueProcess;
@@ -144,5 +259,17 @@ public class ParameterProcessor {
                     ParameterAnnotationProcess.class.getTypeParameters()[1]);
         }
 
+        public ParameterAnnotationProcess getValueProcess() {
+            return valueProcess;
+        }
+
+        public Class<? extends Annotation> getAnnotationType() {
+            return annotationType;
+        }
+
+        public Type getValueType() {
+            return valueType;
+        }
     }
+
 }
