@@ -15,6 +15,8 @@ import java.util.stream.Stream;
 
 /**
  * 方法参数{@link Parameter}处理器
+ * 定义了parameter解析匹配规则，方法拦截层接入后即可自定义处理策略 （例如 Spring MVC RequestBodyAdvice 接入实现 RequestBody 自动解密）
+ *
  * @author jie
  * @date 2021/11/18
  * @description
@@ -24,7 +26,7 @@ public class ParameterProcessor {
     
     private final List<ProcessWrapper> processWrappers;
 
-    public ParameterProcessor(List<? extends ParameterAnnotationProcess> parameterAnnotationProcesses)
+    public ParameterProcessor(List<? extends ParameterAnnotationStrategy> parameterAnnotationProcesses)
     {
         this.processWrappers = parameterAnnotationProcesses
                 .stream()
@@ -41,6 +43,7 @@ public class ParameterProcessor {
      */
     public boolean match(Parameter parameter)
     {
+
         Annotation[] annotations = parameter.getAnnotations();
         for (Annotation annotation : annotations) {
             if (annotation.annotationType() == PropertyProcess.class){
@@ -70,7 +73,7 @@ public class ParameterProcessor {
      * 处理方法参数
      * @param parameterValue
      * @param parameter
-     * @return
+     * @return 处理后的参数值
      */
     public Object process(Object parameterValue ,Parameter parameter)
     {
@@ -91,6 +94,7 @@ public class ParameterProcessor {
         }
 
         Class<?> targetClass = value.getClass();
+        //针对集合类型，处理策略（annotationSet）顺延至元素
         if (Collection.class.isAssignableFrom(targetClass)){
             //集合元素处理
             Collection collection = (Collection) value;
@@ -118,7 +122,7 @@ public class ParameterProcessor {
             return array;
         } else if (Map.class.isAssignableFrom(targetClass)) {
             Map map = (Map) value;
-            //map value 处理
+            //map value 处理（！key不做处理）
             for (Map.Entry<?, ?> entry : ((Map<? ,?>) value).entrySet()) {
                 Object key = entry.getKey();
                 Object mapValue = entry.getValue();
@@ -166,12 +170,12 @@ public class ParameterProcessor {
                 for (ProcessWrapper valueProcessWrapper : processWrappers) {
                     if (valueProcessWrapper.getAnnotationType() == annotation.annotationType()){
                         if (TypeUtils.isAssignableFrom(valueProcessWrapper.getValueType() ,value.getClass())){
-                            ParameterAnnotationProcess valueProcess = valueProcessWrapper.getValueProcess();
+                            ParameterAnnotationStrategy valueProcess = valueProcessWrapper.getValueProcess();
                             try {
                                 return valueProcess.execute(value ,annotation);
                             }catch (Exception e){
                                 log.error("parameter {} process exception ,valueProcess:{} ,parameter value:{}" ,
-                                        propertyLocation ,valueProcess ,value);
+                                        propertyLocation.locationMessage() ,valueProcess ,value);
                                 throw e;
                             }
                         }
@@ -244,22 +248,22 @@ public class ParameterProcessor {
      */
     private class ProcessWrapper {
 
-        private final ParameterAnnotationProcess valueProcess;
+        private final ParameterAnnotationStrategy valueProcess;
 
         private final Class<? extends Annotation> annotationType;
 
         private final Type valueType;
 
-        public ProcessWrapper(ParameterAnnotationProcess valueProcesses)
+        public ProcessWrapper(ParameterAnnotationStrategy valueProcesses)
         {
             this.valueProcess = valueProcesses;
             this.annotationType = (Class) TypeUtils.parseSuperTypeVariable(valueProcesses.getClass(),
-                    ParameterAnnotationProcess.class.getTypeParameters()[0]);
+                    ParameterAnnotationStrategy.class.getTypeParameters()[0]);
             this.valueType = TypeUtils.parseSuperTypeVariable(valueProcesses.getClass(),
-                    ParameterAnnotationProcess.class.getTypeParameters()[1]);
+                    ParameterAnnotationStrategy.class.getTypeParameters()[1]);
         }
 
-        public ParameterAnnotationProcess getValueProcess() {
+        public ParameterAnnotationStrategy getValueProcess() {
             return valueProcess;
         }
 

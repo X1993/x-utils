@@ -3,13 +3,13 @@ package com.github.util.parameter;
 import java.lang.annotation.Annotation;
 
 /**
- * 参数注解绑定参数值处理
+ * 参数注解绑定参数值处理策略
  * @param <A> 支持@Target({ElementType.FIELD ,ElementType.PARAMETER})
  * @param <T>
  * @author jie
  * @date 2021/11/18
  */
-public interface ParameterAnnotationProcess<A extends Annotation ,T> {
+public interface ParameterAnnotationStrategy<A extends Annotation ,T> {
 
     /**
      * 执行
