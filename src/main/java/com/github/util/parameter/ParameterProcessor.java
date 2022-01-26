@@ -24,16 +24,33 @@ import java.util.stream.Stream;
 @Slf4j
 public class ParameterProcessor {
     
-    private final List<ProcessWrapper> processWrappers;
+    private final List<ProcessWrapper> processWrappers = new ArrayList<>();
 
-    public ParameterProcessor(List<? extends ParameterAnnotationStrategy> parameterAnnotationProcesses)
+    /**
+     * 添加自定义策略
+     * @param parameterAnnotationStrategy
+     */
+    public final void addStrategy(ParameterAnnotationStrategy parameterAnnotationStrategy)
     {
-        this.processWrappers = parameterAnnotationProcesses
-                .stream()
-                .sorted((p0, p1) -> p0.order() - p1.order())
-                //排序
-                .map(vp -> new ProcessWrapper(vp))
-                .collect(Collectors.toList());
+        ProcessWrapper newProcessWrapper = new ProcessWrapper(parameterAnnotationStrategy);
+        for (int i = 0; i < processWrappers.size(); i++) {
+            ProcessWrapper processWrapper = processWrappers.get(i);
+            if (processWrapper.getValueProcess().order() >= parameterAnnotationStrategy.order()){
+                processWrappers.add(i ,newProcessWrapper);
+                return;
+            }
+        }
+        processWrappers.add(newProcessWrapper);
+    }
+
+    /**
+     * 添加自定义策略
+     * @param parameterAnnotationStrategies
+     */
+    public final void addStrategy(Iterable<? extends ParameterAnnotationStrategy> parameterAnnotationStrategies){
+        for (ParameterAnnotationStrategy parameterAnnotationStrategy : parameterAnnotationStrategies) {
+            addStrategy(parameterAnnotationStrategy);
+        }
     }
 
     /**
@@ -43,7 +60,6 @@ public class ParameterProcessor {
      */
     public boolean match(Parameter parameter)
     {
-
         Annotation[] annotations = parameter.getAnnotations();
         for (Annotation annotation : annotations) {
             if (annotation.annotationType() == PropertyProcess.class){
@@ -246,7 +262,7 @@ public class ParameterProcessor {
     /**
      * 主要是避免重复解析
      */
-    private class ProcessWrapper {
+    private class ProcessWrapper implements Comparable<ProcessWrapper> {
 
         private final ParameterAnnotationStrategy valueProcess;
 
@@ -273,6 +289,11 @@ public class ParameterProcessor {
 
         public Type getValueType() {
             return valueType;
+        }
+
+        @Override
+        public int compareTo(ProcessWrapper o) {
+            return valueProcess.order() - o.getValueProcess().order();
         }
     }
 

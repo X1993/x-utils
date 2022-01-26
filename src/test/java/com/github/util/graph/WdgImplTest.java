@@ -1,8 +1,5 @@
-package com.github.util.concurrent.graph;
+package com.github.util.graph;
 
-import com.github.util.graph.VertexDistance;
-import com.github.util.graph.Wdg;
-import com.github.util.graph.WdgImpl;
 import org.junit.Assert;
 import org.junit.Test;
 import java.text.MessageFormat;
