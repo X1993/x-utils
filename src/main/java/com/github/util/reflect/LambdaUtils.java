@@ -16,23 +16,23 @@ public class LambdaUtils {
     /**
      * 获取字段名
      * 避免直接引用字符串，利用JavaBean规范提供编译检查
-     * @param getFunction 根据JavaBean规范定义的get方法 lambda形式
+     * @param getterFunction 根据JavaBean规范定义的get方法 lambda形式
      * @return
      */
-    public static <T> String getFieldName(GetFunction<T ,?> getFunction)
+    public static <T> String getFieldName(GetFunction<T ,?> getterFunction)
     {
         Method writeReplace = null;
         Boolean accessible = null;
         try {
             //实现Serializable接口的lambda对象字节码里有这个方法描述lambda方法
-            writeReplace = getFunction.getClass().getDeclaredMethod("writeReplace");
+            writeReplace = getterFunction.getClass().getDeclaredMethod("writeReplace");
             accessible = writeReplace.isAccessible();
             if (!accessible) {
                 writeReplace.setAccessible(true);
             }
-            SerializedLambda serializedLambda = (SerializedLambda) writeReplace.invoke(getFunction);
+            SerializedLambda serializedLambda = (SerializedLambda) writeReplace.invoke(getterFunction);
             String implMethodName = serializedLambda.getImplMethodName();
-            int subLength = 0;
+            int subLength;
             if (implMethodName.startsWith("get") && implMethodName.length() > 3){
                 subLength = 3;
             }else if (implMethodName.startsWith("is") && implMethodName.length() > 2){

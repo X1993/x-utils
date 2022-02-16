@@ -53,7 +53,9 @@ public class IdempotentTask implements Runnable{
                     task.run();
                     return;
                 }finally {
-                    stateManager.releaseExclusive();
+                    if (!stateManager.releaseExclusive()){
+                        throw new IllegalStateException();
+                    }
                 }
             }else {
                 //抢占失败，通知当前任务执行线程
@@ -106,7 +108,7 @@ public class IdempotentTask implements Runnable{
     }
 
     /**
-     * 本地（进程内）状态管理器
+     * 本地（进程内）状态管理器，可以确保同一个进程内实现 {@link IdempotentTask} 要达到的效果
      */
     private static class LocalStateManager implements StateManager {
 
