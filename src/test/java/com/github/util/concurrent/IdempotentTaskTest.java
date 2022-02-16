@@ -18,13 +18,12 @@ public class IdempotentTaskTest {
                 e.printStackTrace();
             }
             counter.incrementAndGet();
-            return null;
         });
 
         new Thread(() -> {
             for (int j = 0; j < 5; j++) {
                 try {
-                    idempotentTask.call();
+                    idempotentTask.run();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

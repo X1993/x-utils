@@ -1,95 +1,150 @@
 package com.github.util.concurrent;
 
 import java.util.Objects;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 通知触发幂等任务
  *
  * 特性：
- * 1.保证时间上每次{@link #call()}调用之后必然会执行一次{@link #task}（不一定由当前线程执行）
+ * 1.保证时间上每次{@link #run()}调用之后必然会执行一次{@link #task}（不一定由当前线程执行）
  * 2.总执行次数N1小于等于调用次数N0，
  * 3.任一时刻最多只有一个线程在执行
  *
  *  应用场景举例：
  *      监听变化，一种实现是周期轮询，如果变化频率小，那么执行效率低。另外一种实现是通知唤醒task执行，
- *  如果{@link #task}执行的比较慢，可能执行n次{@link #call()}调用后{@link #task}才执行完一次，此时
+ *  如果{@link #task}执行的比较慢，可能执行n次{@link #run()}调用后{@link #task}才执行完一次，此时
  *  n-1次{@link #task}已经没有执行的必要。此时使用当前方案许是一种更好的选择
  *
  * @Author: X1993
  * @Date: 2021/4/24
  */
-public class IdempotentTask<R> implements Callable<R>{
+public class IdempotentTask implements Runnable{
 
     /**
      * 需要执行的任务（支持幂等性）
      */
-    private final Callable<R> task;
+    private final Runnable task;
 
     /**
-     * 独占标记
+     * 状态管理器
      */
-    private final AtomicBoolean exclusive = new AtomicBoolean();
+    private final StateManager stateManager;
 
-    /**
-     * 刷新标记
-     */
-    private volatile boolean refresh = false;
-
-    /**
-     * 如果抢占失败，是否将标记刷新
-     */
-    private boolean refreshOverExclusive = true;
-
-    public IdempotentTask(Callable<R> task) {
+    public IdempotentTask(Runnable task , StateManager signManager) {
         Objects.requireNonNull(task);
+        Objects.requireNonNull(signManager);
         this.task = task;
+        this.stateManager = signManager;
     }
 
     public IdempotentTask(Runnable task)
     {
-        Objects.requireNonNull(task);
-        this.task = () -> {
-            task.run();
-            return null;
-        };
-    }
-
-    public boolean isRefreshOverExclusive() {
-        return refreshOverExclusive;
-    }
-
-    public void setRefreshOverExclusive(boolean refreshOverExclusive) {
-        this.refreshOverExclusive = refreshOverExclusive;
+        this(task ,new LocalStateManager());
     }
 
     @Override
-    public R call() throws Exception
-    {
+    public void run() {
         do {
-            if (exclusive.compareAndSet(false ,true)) {
-                //多次通知可以合并执行
-                refresh = false;
+            if (stateManager.tryExclusive()) {
+                //可以合并执行
+                stateManager.setRefresh(false);
                 try {
-                    return task.call();
+                    task.run();
+                    return;
                 }finally {
-                    exclusive.set(false);
+                    stateManager.releaseExclusive();
                 }
-            }else if (refreshOverExclusive){
+            }else {
                 //抢占失败，通知当前任务执行线程
-                refresh = true;
-                if (exclusive.get()){
+                stateManager.setRefresh(true);
+                if (stateManager.isExclusive()){
                     //另一个线程还在执行中
-                    return null;
+                    return;
                 }
                 //可能在更新刷新标记的时候另一个线程已经结束了
             }
         }
         //执行任务的过程中有更新，重新执行一次
-        while (refresh);
+        while (stateManager.getRefresh());
+    }
 
-        return null;
+    /**
+     * 状态管理器
+     */
+    public interface StateManager {
+
+        /**
+         * 尝试设置独占状态
+         * @return
+         */
+        boolean tryExclusive();
+
+        /**
+         * 解除独占状态
+         */
+        boolean releaseExclusive();
+
+        /**
+         * 是否存在独占状态
+         * @return
+         */
+        boolean isExclusive();
+
+        /**
+         * 设置刷新状态
+         * @param refreshSign
+         */
+        void setRefresh(boolean refreshSign);
+
+        /**
+         * 获取刷新状态
+         * @return
+         */
+        boolean getRefresh();
+
+    }
+
+    /**
+     * 本地（进程内）状态管理器
+     */
+    private static class LocalStateManager implements StateManager {
+
+        /**
+         * 独占标记
+         */
+        private final AtomicReference<Thread> exclusiveSign = new AtomicReference();
+
+        /**
+         * 刷新标记
+         */
+        private volatile boolean refreshSign = false;
+
+        @Override
+        public boolean tryExclusive() {
+            return exclusiveSign.compareAndSet(null ,Thread.currentThread());
+        }
+
+        @Override
+        public boolean releaseExclusive() {
+            return exclusiveSign.compareAndSet(Thread.currentThread() ,null);
+        }
+
+        @Override
+        public boolean isExclusive() {
+            return exclusiveSign.get() != null;
+        }
+
+        @Override
+        public void setRefresh(boolean refreshSign) {
+            this.refreshSign = refreshSign;
+        }
+
+        @Override
+        public boolean getRefresh() {
+            return this.refreshSign;
+        }
+
     }
 
 }
