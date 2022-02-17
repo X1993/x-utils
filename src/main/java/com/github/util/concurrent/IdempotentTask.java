@@ -13,8 +13,8 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  *  应用场景举例：
  *      监听变化，一种实现是周期轮询，如果变化频率小，那么执行效率低。另外一种实现是通知唤醒task执行，
- *  如果{@link #task}执行的比较慢，可能执行n次{@link #run()}调用后{@link #task}才执行完一次，此时
- *  n-1次{@link #task}已经没有执行的必要。此时使用当前方案许是一种更好的选择
+ *  如果{@link #task}执行的比较慢，可能执行n次{@link #run()}调用后{@link #task}连一次都没执行完，
+ *  此时剩下的n-1次{@link #task}已经没有执行的必要。此时使用当前方案许是一种更好的选择
  *
  * @Author: X1993
  * @Date: 2021/4/24
