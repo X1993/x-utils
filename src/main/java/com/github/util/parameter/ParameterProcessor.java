@@ -15,7 +15,8 @@ import java.util.stream.Stream;
 
 /**
  * 方法参数{@link Parameter}处理器
- * 定义了parameter解析匹配规则，方法拦截层接入后即可自定义处理策略 （例如 Spring MVC RequestBodyAdvice 接入实现 RequestBody 自动解密）
+ * 定义了parameter解析匹配规则，方法拦截层接入后即可自定义处理策略，可参考单元测试
+ * （例如 Spring MVC RequestBodyAdvice 接入实现 RequestBody 自动解密）
  *
  * @author jie
  * @date 2021/11/18
@@ -30,7 +31,7 @@ public class ParameterProcessor {
      * 添加自定义策略
      * @param parameterAnnotationStrategy
      */
-    public final void addStrategy(ParameterAnnotationStrategy parameterAnnotationStrategy)
+    public final void addStrategy(ParameterAnnotationStrategy<? extends Annotation ,?> parameterAnnotationStrategy)
     {
         ProcessWrapper newProcessWrapper = new ProcessWrapper(parameterAnnotationStrategy);
         for (int i = 0; i < processWrappers.size(); i++) {
@@ -47,7 +48,7 @@ public class ParameterProcessor {
      * 添加自定义策略
      * @param parameterAnnotationStrategies
      */
-    public final void addStrategy(Iterable<? extends ParameterAnnotationStrategy> parameterAnnotationStrategies){
+    public final void addStrategy(Iterable<? extends ParameterAnnotationStrategy<? extends Annotation ,?>> parameterAnnotationStrategies){
         for (ParameterAnnotationStrategy parameterAnnotationStrategy : parameterAnnotationStrategies) {
             addStrategy(parameterAnnotationStrategy);
         }
@@ -264,13 +265,13 @@ public class ParameterProcessor {
      */
     private class ProcessWrapper implements Comparable<ProcessWrapper> {
 
-        private final ParameterAnnotationStrategy valueProcess;
+        private final ParameterAnnotationStrategy<? extends Annotation ,?> valueProcess;
 
         private final Class<? extends Annotation> annotationType;
 
         private final Type valueType;
 
-        public ProcessWrapper(ParameterAnnotationStrategy valueProcesses)
+        public ProcessWrapper(ParameterAnnotationStrategy<? extends Annotation ,?> valueProcesses)
         {
             this.valueProcess = valueProcesses;
             this.annotationType = (Class) TypeUtils.parseSuperTypeVariable(valueProcesses.getClass(),
@@ -279,7 +280,7 @@ public class ParameterProcessor {
                     ParameterAnnotationStrategy.class.getTypeParameters()[1]);
         }
 
-        public ParameterAnnotationStrategy getValueProcess() {
+        public ParameterAnnotationStrategy<? extends Annotation ,?> getValueProcess() {
             return valueProcess;
         }
 
