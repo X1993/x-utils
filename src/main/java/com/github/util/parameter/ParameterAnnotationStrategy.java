@@ -5,7 +5,7 @@ import java.lang.annotation.Annotation;
 /**
  * 参数注解绑定参数值处理策略
  * @param <A> 支持@Target({ElementType.FIELD ,ElementType.PARAMETER})
- * @param <T>
+ * @param <T> 支持的数据类型
  * @author jie
  * @date 2021/11/18
  */
