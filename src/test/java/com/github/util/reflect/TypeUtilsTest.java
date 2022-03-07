@@ -177,4 +177,46 @@ public class TypeUtilsTest {
         Assert.assertFalse(TypeUtils.isAssignableFrom(actualTypeArguments[0] ,actualTypeArguments[1]));
     }
 
+    class Super<T0, T1 extends Number ,T2 extends T0,T3 extends List<T0>>
+    {
+        private Map<T0, T1> pro1;
+        private Map<T2 ,T3> pro2;
+
+        public <T5> T3 method0(T0[] t0Array, T5 t5){
+            return null;
+        }
+    }
+
+    class Child extends Super<String ,Integer ,String ,ArrayList<String>>{}
+
+    @Test
+    public void tryReplaceClassTypeVariable() throws NoSuchFieldException, NoSuchMethodException
+    {
+        Type pro1FieldType = Super.class.getDeclaredField("pro1").getGenericType();
+        Type pro1FieldTypeReplaceResult = TypeUtils.tryReplaceClassTypeVariable(Child.class, pro1FieldType);
+        Assert.assertEquals(pro1FieldTypeReplaceResult.getTypeName() ,
+                "java.util.Map<java.lang.String, java.lang.Integer>" );
+
+        Type pro2FieldType = Super.class.getDeclaredField("pro2").getGenericType();
+        Type pro2FieldTypeReplaceResult = TypeUtils.tryReplaceClassTypeVariable(Child.class, pro2FieldType);
+        Assert.assertEquals(pro2FieldTypeReplaceResult.getTypeName() ,
+                "java.util.Map<java.lang.String, java.util.ArrayList<java.lang.String>>");
+
+        Method method0 = Super.class.getMethod("method0", Object[].class, Object.class);
+        Type method0ReturnType = method0.getGenericReturnType();
+        Type method0ReturnTypeReplaceResult = TypeUtils.tryReplaceClassTypeVariable(Child.class, method0ReturnType);
+        Assert.assertEquals(method0ReturnTypeReplaceResult.getTypeName() ,
+                "java.util.ArrayList<java.lang.String>");
+
+        Type[] genericParameterTypes = method0.getGenericParameterTypes();
+        Type method0Param0Type = genericParameterTypes[0];
+        Type method0Param0TypeReplaceResult = TypeUtils.tryReplaceClassTypeVariable(Child.class, method0Param0Type);
+        Assert.assertEquals(method0Param0TypeReplaceResult.getTypeName() ,
+                "java.lang.String[]");
+
+        Type method0Param1Type = genericParameterTypes[1];
+        Type method0Param1TypeReplaceResult = TypeUtils.tryReplaceClassTypeVariable(Child.class, method0Param1Type);
+        Assert.assertEquals(method0Param1TypeReplaceResult.getTypeName() , "T5");
+    }
+
 }

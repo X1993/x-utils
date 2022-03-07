@@ -43,7 +43,9 @@ public class TypeUtils {
         if (targetClass == null || matchClassTypeVariable == null){
             throw new IllegalArgumentException("params is null");
         }
-        if (targetClass.equals(matchClassTypeVariable.getGenericDeclaration())){
+
+        Class<?> genericDeclaration = matchClassTypeVariable.getGenericDeclaration();
+        if (targetClass.equals(genericDeclaration) || !genericDeclaration.isAssignableFrom(targetClass)){
             return matchClassTypeVariable;
         }
 
@@ -103,8 +105,8 @@ public class TypeUtils {
             }
         }
         if (matchClassTypeVariable == null){
-            throw new IllegalArgumentException("not found TypeVariable \"" + matchTypeVariableName
-                    + "\" on " + matchRawClass);
+            throw new IllegalArgumentException("not found TypeVariable " + matchTypeVariableName
+                    + " on " + matchRawClass);
         }
         return parseSuperTypeVariable(targetClass ,matchClassTypeVariable);
     }
@@ -166,6 +168,78 @@ public class TypeUtils {
         return matchClassTypeVariable;
     }
 
+
+    /**
+     * <p>
+     *
+     *    class Super<T0>
+     *    {
+     *        private T0 pro1;
+     *    }
+     *
+     *    class Child extends Super<String>{}
+     *
+     *    TypeUtils.tryReplaceClassTypeVariable(Child.class, Super.class.getDeclaredField("pro1").getGenericType()); //String.class
+     *
+     * </p>
+     * 将引用了Class类型变量的Type根据实际定义的类型做替换
+     * @param targetClass 定义了类型变量实际类型的类
+     * @param superType 申明了类型变量的超累上定义的Type (来自：字段/方法参数/方法返回)
+     * @return
+     */
+    public static Type tryReplaceClassTypeVariable(Class targetClass ,Type superType)
+    {
+        if (superType instanceof Class){
+            return superType;
+        } else if (superType instanceof ParameterizedType) {
+            ParameterizedType parameterizedType = (ParameterizedType) superType;
+            Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+            boolean replace = false;
+
+            Type rawType = ((ParameterizedType) superType).getRawType();
+
+            if (actualTypeArguments.length > 0)
+            {
+                for (int i = 0; i < actualTypeArguments.length; i++) {
+                    Type actualTypeArgument = actualTypeArguments[i];
+                    Type actualTypeArgument1 = tryReplaceClassTypeVariable(targetClass, actualTypeArgument);
+                    if (actualTypeArgument != actualTypeArgument1){
+                        //成功替换类型变量
+                        actualTypeArguments[i] = actualTypeArgument1;
+                        replace = true;
+                    }
+                }
+            }
+
+            if (replace){
+                return ParameterizedTypeImpl.make((Class<?>) rawType,actualTypeArguments ,null);
+            }else {
+                return superType;
+            }
+        } else if (superType instanceof GenericArrayType){
+            GenericArrayType genericArrayType = (GenericArrayType) superType;
+            Type genericComponentType = genericArrayType.getGenericComponentType();
+            Type tmpGenericComponentType = tryReplaceClassTypeVariable(targetClass, genericComponentType);
+            if (genericComponentType != tmpGenericComponentType){
+                return GenericArrayTypeImpl.make(tmpGenericComponentType);
+            }else {
+                return superType;
+            }
+        } else if (superType instanceof TypeVariable){
+            TypeVariable typeVariable = (TypeVariable) superType;
+            GenericDeclaration genericDeclaration = typeVariable.getGenericDeclaration();
+            if (genericDeclaration instanceof Class){
+                //类上定义的变量类型
+                Class typeVariableClass = (Class) genericDeclaration;
+                if (typeVariableClass.isAssignableFrom(targetClass)){
+                    return parseSuperTypeVariable(targetClass ,typeVariable);
+                }
+            }
+            return superType;
+        }
+        return superType;
+    }
+
     /**
      * <p>
      *     type: List<Map<String ,T>>
@@ -186,7 +260,7 @@ public class TypeUtils {
                                               Type replaceType)
     {
         if (type == null || typeVariablePredicate == null || replaceType == null){
-            throw new IllegalArgumentException("replace type is null");
+            throw new IllegalArgumentException();
         }
         if (type instanceof TypeVariable){
             if (typeVariablePredicate.test((TypeVariable) type)){
@@ -246,26 +320,6 @@ public class TypeUtils {
     /**
      * <p>
      *     type: List<Map<String ,T>>
-     *     typeVariablePredicate: "T"
-     *     replaceType: User.class
-     *     return: List<Map<String ,User>>
-     * </p>
-     *
-     * 如果type中有指定的类型变量，尝试替换指定的类型
-     *
-     * @param type 尝试被替换的类型
-     * @param matchTypeVariableName 匹配的类型变量名
-     * @param replaceType 替换类型
-     * @return
-     */
-    public static Type tryReplaceTypeVariable(Type type ,String matchTypeVariableName, Type replaceType){
-        return tryReplaceTypeVariable(type ,
-                typeVariable -> matchTypeVariableName.equals(typeVariable.getName()) ,replaceType);
-    }
-
-    /**
-     * <p>
-     *     type: List<Map<String ,T>>
      *     typeVariablePredicate: T
      *     replaceType: User.class
      *     return: List<Map<String ,User>>
@@ -282,7 +336,27 @@ public class TypeUtils {
                                               TypeVariable<? extends GenericDeclaration> matchTypeVariable,
                                               Type replaceType)
     {
-        return tryReplaceTypeVariable(type ,typeVariable -> matchTypeVariable.equals(typeVariable) ,replaceType);
+        return tryReplaceTypeVariable(type ,typeVariable -> matchTypeVariable == typeVariable ,replaceType);
+    }
+
+    /**
+     * <p>
+     *     type: List<Map<String ,T>>
+     *     typeVariablePredicate: "T"
+     *     replaceType: User.class
+     *     return: List<Map<String ,User>>
+     * </p>
+     *
+     * 如果type中有指定的类型变量，尝试替换指定的类型
+     *
+     * @param type 尝试被替换的类型
+     * @param matchTypeVariableName 匹配的类型变量名
+     * @param replaceType 替换类型
+     * @return
+     */
+    public static Type tryReplaceTypeVariable(Type type ,String matchTypeVariableName, Type replaceType){
+        return tryReplaceTypeVariable(type ,
+                typeVariable -> matchTypeVariableName.equals(typeVariable.getName()) ,replaceType);
     }
 
     /**
