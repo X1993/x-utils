@@ -16,12 +16,14 @@ import java.util.stream.Stream;
 /**
  * 方法参数{@link Parameter}处理器
  * 定义了parameter解析匹配规则，方法拦截层接入后即可自定义处理策略（可参考单元测试）
- * （例如 Spring MVC RequestBodyAdvice 接入实现 RequestBody 自动解密）
+ * （例如 Spring MVC RequestBodyAdvice 接入实现 RequestBody 自动解密，解密规则需要自定义）
  *
  * 处理规则
  *      1.直接处理方法参数，参数上使用{@link ParameterAnnotationStrategy}定义的注解标记，解析后执行匹配的策略
  *      2.处理参数特定属性，在参数上使用{@link PropertyProcess}注解标记，支持递归
  *      3.参数类型是集合/数组/map，自动将参数上标记的注解传递给每个元素（map只针对value）
+ *
+ * （可参考单元测试）
  *
  * @author jie
  * @date 2021/11/18
