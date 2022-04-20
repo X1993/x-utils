@@ -31,7 +31,6 @@ public class LambdaUtils {
      *     }
      *
      *     LambdaUtils.getFieldName(User::getUserName); //"userName"
-     *
      * </p>
      *
      * @param getterFunction 根据JavaBean规范定义的get方法 lambda形式

@@ -9,7 +9,7 @@ import java.lang.reflect.UndeclaredThrowableException;
 
 /**
  * 方法句柄工具类
- * @author wangjj7
+ * @author X1993
  * @date 2022/4/20
  * @description
  */
@@ -52,7 +52,7 @@ public class MethodHandleUtils {
     /**
      * 执行默认方法
      *
-     * 使用场景：接口做动态代理时，不存在被代理对象，所有逻辑都实现在拦截层
+     * 使用场景：接口做动态代理，不存在被代理对象，所有逻辑都实现在拦截层
      * （{@link java.lang.reflect.InvocationHandler#invoke(Object, Method, Object[])}）。
      * 对于默认方法不可以通过{@link Method#invoke(Object, Object...)}的方式执行，因为不存在被代理对象，
      * 如果使用代理对象执行会陷入死循环。此时可以通过这种方式实现
