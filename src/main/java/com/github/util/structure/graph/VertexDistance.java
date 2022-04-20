@@ -1,4 +1,4 @@
-package com.github.util.graph;
+package com.github.util.structure.graph;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

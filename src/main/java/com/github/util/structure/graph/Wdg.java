@@ -1,4 +1,4 @@
-package com.github.util.graph;
+package com.github.util.structure.graph;
 
 import java.util.List;
 import java.util.Set;

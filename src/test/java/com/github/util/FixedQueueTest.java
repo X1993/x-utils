@@ -1,5 +1,6 @@
 package com.github.util;
 
+import com.github.util.structure.FixedQueue;
 import org.junit.Assert;
 import org.junit.Test;
 import java.util.Arrays;

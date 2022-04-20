@@ -1,4 +1,4 @@
-package com.github.util;
+package com.github.util.structure;
 
 import java.util.*;
 import java.util.function.Predicate;
