@@ -4,14 +4,14 @@ import org.junit.Assert;
 import org.junit.Test;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class IdempotentTaskTest {
+public class IdempotentTaskTriggerTest {
 
     @Test
     public void run() throws InterruptedException
     {
         AtomicInteger counter = new AtomicInteger();
         long sleepMs = 500L;
-        IdempotentTask idempotentTask = new IdempotentTask(() -> {
+        IdempotentTaskTrigger idempotentTask = new IdempotentTaskTrigger(() -> {
             try {
                 Thread.sleep(sleepMs);
             } catch (InterruptedException e) {

@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * 通知触发幂等任务
+ * 幂等任务触发器
  *
  * 特性：
  * 1.保证时间上每次{@link #run()}调用之后必然会执行一次{@link #task}（不一定由当前线程执行）
@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @Author: X1993
  * @Date: 2021/4/24
  */
-public class IdempotentTask implements Runnable{
+public class IdempotentTaskTrigger implements Runnable{
 
     /**
      * 需要执行的任务（支持幂等性）
@@ -31,14 +31,14 @@ public class IdempotentTask implements Runnable{
      */
     private final StateManager stateManager;
 
-    public IdempotentTask(Runnable task , StateManager signManager) {
+    public IdempotentTaskTrigger(Runnable task , StateManager signManager) {
         Objects.requireNonNull(task);
         Objects.requireNonNull(signManager);
         this.task = task;
         this.stateManager = signManager;
     }
 
-    public IdempotentTask(Runnable task)
+    public IdempotentTaskTrigger(Runnable task)
     {
         this(task ,new LocalStateManager());
     }
@@ -108,7 +108,7 @@ public class IdempotentTask implements Runnable{
     }
 
     /**
-     * 本地（进程内）状态管理器，可以确保同一个进程内实现 {@link IdempotentTask} 要达到的效果
+     * 本地（进程内）状态管理器，可以确保同一个进程内实现 {@link IdempotentTaskTrigger} 要达到的效果
      */
     private static class LocalStateManager implements StateManager {
 
