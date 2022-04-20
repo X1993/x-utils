@@ -7,6 +7,8 @@ import java.lang.reflect.Method;
 import java.util.function.Function;
 
 /**
+ * 在使用mybatis-plus的过程中发现可以通过Lambda形式的JavaBean Getter方法解析对应的属性名，
+ * 通过这种方式可以避免使用字符串引用类属性，在编译器提供检查支持。
  * @author X1993
  * @date 2022/1/26
  * @description
