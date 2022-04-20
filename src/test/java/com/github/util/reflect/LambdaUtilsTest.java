@@ -11,12 +11,13 @@ import org.junit.Test;
  */
 public class LambdaUtilsTest {
 
-    @Data
     static class User{
 
         private String userName;
 
-        private boolean vip;
+        public String getUserName() {
+            return userName;
+        }
 
         private String findInfo(){
             return "a";
@@ -25,16 +26,16 @@ public class LambdaUtilsTest {
     }
 
     @Test
-    public void testGetFieldName() {
+    public void getFieldNameTest()
+    {
         Assert.assertEquals(LambdaUtils.getFieldName(User::getUserName), "userName");
-        Assert.assertEquals(LambdaUtils.getFieldName(User::isVip), "vip");
-        boolean exeception = false;
+        boolean exception = false;
         try {
             LambdaUtils.getFieldName(User::findInfo);
         }catch (RuntimeException e){
-            exeception = true;
+            exception = true;
         }
-        Assert.assertTrue(exeception);
+        Assert.assertTrue(exception);
     }
 
 }

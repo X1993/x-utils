@@ -50,8 +50,7 @@ public class MethodHandleUtils {
     }
 
     /**
-     * 执行默认方法中的代码
-     * 不会执行重写方法
+     * 执行默认方法
      *
      * 使用场景：接口做动态代理时，不存在被代理对象，所有逻辑都实现在拦截层
      * （{@link java.lang.reflect.InvocationHandler#invoke(Object, Method, Object[])}）。
