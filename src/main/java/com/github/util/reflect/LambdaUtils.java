@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.lang.invoke.SerializedLambda;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -72,6 +74,31 @@ public class LambdaUtils {
     @FunctionalInterface
     public interface GetFunction<T ,R> extends Serializable ,Function<T ,R> {
 
+    }
+
+    /**
+     * 带缓存的Function函数
+     * @param function
+     * @param cacheMap 缓存容器
+     * @param <T>
+     * @param <R>
+     * @return
+     */
+    public static <T ,R> Function<T ,R> cacheFunction(Function<T ,R> function ,Map<T ,R> cacheMap)
+    {
+        return t -> cacheMap.computeIfAbsent(t ,key -> function.apply(key));
+    }
+
+    /**
+     * 带缓存的Function函数
+     * @param function
+     * @param <T>
+     * @param <R>
+     * @return
+     */
+    public static <T ,R> Function<T ,R> cacheFunction(Function<T ,R> function)
+    {
+        return cacheFunction(function ,new HashMap<>());
     }
 
 }

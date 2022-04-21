@@ -1,8 +1,10 @@
 package com.github.util.reflect;
 
-import lombok.Data;
 import org.junit.Assert;
 import org.junit.Test;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Function;
 
 /**
  * @author X1993
@@ -29,6 +31,7 @@ public class LambdaUtilsTest {
     public void getFieldNameTest()
     {
         Assert.assertEquals(LambdaUtils.getFieldName(User::getUserName), "userName");
+
         boolean exception = false;
         try {
             LambdaUtils.getFieldName(User::findInfo);
@@ -36,6 +39,32 @@ public class LambdaUtilsTest {
             exception = true;
         }
         Assert.assertTrue(exception);
+    }
+
+    @Test
+    public void cacheFunctionTest()
+    {
+        Function<Integer ,Integer> function = new Function<Integer, Integer>() {
+
+            final Set<Integer> set = new HashSet<>();
+
+            @Override
+            public Integer apply(Integer integer) {
+                if (set.contains(integer)){
+                    //重复执行报错
+                    throw new IllegalStateException();
+                }
+                set.add(integer);
+                return integer;
+            }
+        };
+
+        Function<Integer, Integer> cacheFunction = LambdaUtils.cacheFunction(function);
+
+        cacheFunction.apply(1);
+        cacheFunction.apply(1);
+
+        cacheFunction.apply(2);
     }
 
 }
