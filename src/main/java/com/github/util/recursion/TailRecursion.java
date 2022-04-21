@@ -5,7 +5,7 @@ import java.util.stream.Stream;
 /**
  * 尾递归函数接口
  *
- * Java编译器不支持尾递归优化，网上看到一篇文章通过模拟栈 + Stream的延迟加载来实现尾递归，学习下。 ∑( 口 ||
+ * Java编译器不支持尾递归优化，看到一篇文章通过模拟栈 + Stream的延迟加载来实现尾递归，学习下。 ∑( 口 ||
  *
  * 使用方式可以参考单元测试
  *
@@ -36,7 +36,7 @@ public interface TailRecursion<T> {
      * @return 递归最终结果
      */
     default T getResult()  {
-        throw new Error("递归还没有结束,调用获得结果异常!");
+        throw new IllegalStateException("递归还没有结束,调用获得结果异常!");
     }
 
     /**

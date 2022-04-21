@@ -21,7 +21,7 @@ public class TailRecursionTest {
         try {
             totalTailRecursion(0 ,num);
         } catch (StackOverflowError error){
-            //java不支持尾递归，这里堆栈异常了
+            //java不支持尾递归，堆栈溢出
             stackOverflowError = true;
         }
         Assert.assertTrue(stackOverflowError);
