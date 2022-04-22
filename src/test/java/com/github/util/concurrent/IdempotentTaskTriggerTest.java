@@ -20,15 +20,9 @@ public class IdempotentTaskTriggerTest {
             counter.incrementAndGet();
         });
 
-        new Thread(() -> {
-            for (int j = 0; j < 5; j++) {
-                try {
-                    idempotentTask.run();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+        for (int i = 0; i < 5; i++) {
+            new Thread(idempotentTask).start();
+        }
 
         Thread.sleep(3 * sleepMs);
         Assert.assertTrue(counter.get() == 2);

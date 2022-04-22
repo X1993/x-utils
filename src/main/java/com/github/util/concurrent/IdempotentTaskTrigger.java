@@ -31,7 +31,7 @@ public class IdempotentTaskTrigger implements Runnable{
      */
     private final StateManager stateManager;
 
-    public IdempotentTaskTrigger(Runnable task , StateManager signManager) {
+    public IdempotentTaskTrigger(Runnable task ,StateManager signManager) {
         Objects.requireNonNull(task);
         Objects.requireNonNull(signManager);
         this.task = task;
@@ -44,31 +44,36 @@ public class IdempotentTaskTrigger implements Runnable{
     }
 
     @Override
-    public void run() {
-        do {
+    public void run()
+    {
+        while (true){
             if (stateManager.tryExclusive()) {
                 //可以合并执行
                 stateManager.setRefresh(false);
                 try {
                     task.run();
-                    return;
                 }finally {
-                    if (!stateManager.releaseExclusive()){
-                        throw new IllegalStateException();
+                    if (!stateManager.getRefresh()) {
+                        if (!stateManager.releaseExclusive()) {
+                            throw new IllegalStateException();
+                        }
+                        if (!stateManager.getRefresh()){
+                            //确保在解除占用标记的过程中没有新的执行请求
+                            return;
+                        }
                     }
+                    //任务执行过程中有收到新的执行请求，重新执行一次
                 }
             }else {
                 //抢占失败，通知当前任务执行线程
                 stateManager.setRefresh(true);
                 if (stateManager.isExclusive()){
-                    //另一个线程还在执行中
+                    //确保执行中的线程能收到通知
                     return;
                 }
-                //可能在更新刷新标记的时候另一个线程已经结束了
+                //可能在更新刷新标记的时候另一个线程已经结束了，再次尝试获取执行权
             }
         }
-        //执行任务的过程中有更新，重新执行一次
-        while (stateManager.getRefresh());
     }
 
     /**
@@ -77,7 +82,7 @@ public class IdempotentTaskTrigger implements Runnable{
     public interface StateManager {
 
         /**
-         * 尝试设置独占状态
+         * 尝试设置独占状态，可重入
          * @return
          */
         boolean tryExclusive();
@@ -123,13 +128,18 @@ public class IdempotentTaskTrigger implements Runnable{
         private volatile boolean refreshSign = false;
 
         @Override
-        public boolean tryExclusive() {
+        public boolean tryExclusive()
+        {
+            Thread currentExclusiveThread = exclusiveSign.get();
+            if (currentExclusiveThread != null){
+                return currentExclusiveThread == Thread.currentThread();
+            }
             return exclusiveSign.compareAndSet(null ,Thread.currentThread());
         }
 
         @Override
         public boolean releaseExclusive() {
-            return exclusiveSign.compareAndSet(Thread.currentThread() ,null);
+            return exclusiveSign.compareAndSet(Thread.currentThread(), null);
         }
 
         @Override
