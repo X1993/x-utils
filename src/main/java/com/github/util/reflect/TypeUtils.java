@@ -435,7 +435,7 @@ public class TypeUtils {
                     if (!Number.class.isAssignableFrom((Class<?>) parentType)){
                         return false;
                     }
-                    if (Byte.class == parentType && short.class == subType){
+                    if (Byte.class == parentType && byte.class == subType){
                         return true;
                     }else if (Short.class == parentType && short.class == subType){
                         return true;
