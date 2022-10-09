@@ -3,8 +3,12 @@ package com.github.util.reflect;
 import sun.reflect.generics.reflectiveObjects.GenericArrayTypeImpl;
 import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 import java.lang.reflect.*;
+import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -512,6 +516,171 @@ public class TypeUtils {
         }
 
         return false;
+    }
+
+    /**
+     * 根据{@link Type#getTypeName()}生成Type
+     * @param typeName
+     * @param classLoader
+     * @return 只保证 {@link Type#getTypeName()} 相同
+     */
+    public static Type parseType(String typeName ,ClassLoader classLoader)
+    {
+        if (typeName == null || typeName.length() == 0){
+            throw new IllegalArgumentException();
+        }
+        typeName.trim();
+        int length = typeName.length();
+        char lastChar = typeName.charAt(length - 1);
+        if (lastChar == ']'){
+            if (length <= 2){
+                throw new IllegalArgumentException(MessageFormat.format("非法的typeName,{0}" ,typeName));
+            }
+            if (typeName.charAt(length - 2) == '['){
+                return GenericArrayTypeImpl.make(parseType(typeName.substring(0 ,length - 2) ,classLoader));
+            }else {
+                throw new IllegalArgumentException(MessageFormat.format("非法的typeName,{0}" ,typeName));
+            }
+        }else if (lastChar == '>'){
+            if (length <= 2){
+                throw new IllegalArgumentException(MessageFormat.format("非法的typeName,{0}" ,typeName));
+            }
+            try {
+                int startSubTypeIndex = typeName.indexOf("<");
+                Class rawClass = classLoader.loadClass(typeName.substring(0 ,startSubTypeIndex));
+
+                String actualTypeArgumentsName = typeName.substring(startSubTypeIndex + 1 ,length - 1);
+
+                return ParameterizedTypeImpl.make(rawClass ,parseTypes(actualTypeArgumentsName ,classLoader) ,null);
+            } catch (ClassNotFoundException e) {
+                throw new IllegalArgumentException(MessageFormat.format("非法的typeName,{0}" ,typeName) ,e);
+            }
+        }else {
+            try {
+                return classLoader.loadClass(typeName);
+            } catch (ClassNotFoundException e) {
+                throw new IllegalArgumentException(MessageFormat.format("非法的typeName,{0}" ,typeName) ,e);
+            }
+        }
+    }
+
+    /**
+     * 根据{@link Type#getTypeName()}生成Type
+     * @param typeNames 多个{@link Type#getTypeName()}之间通过逗号分割
+     *                  例：java.util.List<java.lang.String>, java.lang.String
+     * @param classLoader
+     * @return 只保证 {@link Type#getTypeName()} 相同
+     */
+    public static Type[] parseTypes(String typeNames ,ClassLoader classLoader){
+        if (typeNames == null || typeNames.length() == 0){
+            throw new IllegalArgumentException();
+        }
+
+        List<String> actualTypeArgumentNames = new ArrayList<>();
+        StringBuilder currentActualTypeArgumentName = new StringBuilder();
+        int leftCount = 0;
+        for (int i = 0; i < typeNames.length(); i++) {
+            char c = typeNames.charAt(i);
+            if (c == ' '){
+                continue;
+            }
+            if (c == ',' && leftCount == 0){
+                actualTypeArgumentNames.add(currentActualTypeArgumentName.toString());
+                currentActualTypeArgumentName = new StringBuilder();
+                continue;
+            }
+
+            if (c == '<'){
+                leftCount++;
+            } else if (c == '>'){
+                leftCount--;
+            }
+            currentActualTypeArgumentName.append(c);
+        }
+
+        if (currentActualTypeArgumentName.length() > 0){
+            actualTypeArgumentNames.add(currentActualTypeArgumentName.toString());
+        }
+
+        Type[] actualTypeArguments = new Type[actualTypeArgumentNames.size()];
+        for (int i = 0; i < actualTypeArgumentNames.size(); i++) {
+            actualTypeArguments[i] = parseType(actualTypeArgumentNames.get(i) ,classLoader);
+        }
+
+        return actualTypeArguments;
+    }
+
+    /**
+     * 根据{@link Type#getTypeName()}获取{@link Class}
+     * @param typeName
+     * @param classLoader
+     * @return
+     */
+    public static Class parseTypeName2Class(String typeName , ClassLoader classLoader){
+        if (typeName == null || typeName.length() == 0){
+            throw new IllegalArgumentException();
+        }
+        int arrayDimension = 0;
+        int i = typeName.length() - 1;
+        while (true) {
+            if (typeName.charAt(i) == ']') {
+                if (typeName.charAt(--i) != '['){
+                    throw new IllegalArgumentException(MessageFormat.format("非法的typeName,{0}" ,typeName));
+                }
+                i--;
+                arrayDimension++;
+            }else {
+                break;
+            }
+        }
+        String rawTypeName = typeName.substring(0 ,i + 1);
+        int index = rawTypeName.indexOf("<");
+        if (index >= 0){
+            rawTypeName = rawTypeName.substring(0 ,index);
+        }
+        StringBuilder className = new StringBuilder();
+        for (int i1 = 0; i1 < arrayDimension; i1++) {
+            className.append('[');
+        }
+        if (arrayDimension > 0) {
+            //数组
+            if (int.class.getName().equals(rawTypeName)) {
+                className.append('I');
+            } else if (boolean.class.getName().equals(rawTypeName)) {
+                className.append('Z');
+            } else if (byte.class.getName().equals(rawTypeName)) {
+                className.append('B');
+            } else if (char.class.getName().equals(rawTypeName)) {
+                className.append('C');
+            } else if (short.class.getName().equals(rawTypeName)) {
+                className.append('S');
+            } else if (float.class.getName().equals(rawTypeName)) {
+                className.append('F');
+            } else if (double.class.getName().equals(rawTypeName)) {
+                className.append('D');
+            } else if (long.class.getName().equals(rawTypeName)) {
+                className.append('J');
+            }else {
+                className.append('L').append(rawTypeName).append(';');
+            }
+        }else {
+            className.append(rawTypeName);
+        }
+
+        try {
+            return Class.forName(className.toString() ,false ,classLoader);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    /**
+     * 根据{@link Type#getTypeName()}获取{@link Class}
+     * @param typeName
+     * @return
+     */
+    public static Class parseTypeName2Class(String typeName){
+        return parseTypeName2Class(typeName ,ClassLoader.getSystemClassLoader());
     }
 
     static class WildcardTypeImpl implements WildcardType{

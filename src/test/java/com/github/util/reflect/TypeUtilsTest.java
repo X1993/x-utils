@@ -219,4 +219,32 @@ public class TypeUtilsTest {
         Assert.assertEquals(method0Param1TypeReplaceResult.getTypeName() , "T5");
     }
 
+    @Test
+    public void parseTest() {
+        // com.github.util.reflect.TypeUtilsTest$Interface12<java.util.Map<java.lang.String, java.util.List[]>, java.util.HashMap<java.lang.String, java.util.ArrayList[]>>
+        Type parentType = Interface14.class.getGenericInterfaces()[0];
+        Assert.assertEquals(parentType.getTypeName() ,
+                TypeUtils.parseType(parentType.getTypeName(), ClassLoader.getSystemClassLoader()).getTypeName());
+
+        Type parentType1 = new String[2].getClass();
+        Assert.assertEquals(parentType1.getTypeName() ,
+                TypeUtils.parseType(parentType1.getTypeName(), ClassLoader.getSystemClassLoader()).getTypeName());
+
+        Type parentType2 = new String[2][2].getClass();
+        Assert.assertEquals(parentType2.getTypeName() ,
+                TypeUtils.parseType(parentType2.getTypeName(), ClassLoader.getSystemClassLoader()).getTypeName());
+
+        Type parentType3 = String.class;
+        Assert.assertEquals(parentType3.getTypeName() ,
+                TypeUtils.parseType(parentType3.getTypeName(), ClassLoader.getSystemClassLoader()).getTypeName());
+    }
+
+    @Test
+    public void parseClass() {
+        Class<? extends String[][]> class0 = new String[1][1].getClass();
+        Assert.assertEquals(class0 ,TypeUtils.parseTypeName2Class(class0.getTypeName(), ClassLoader.getSystemClassLoader()));
+        List<String>[][] lists = new List[0][0];
+        Assert.assertEquals(TypeUtils.parseTypeName2Class("java.util.List<String>[][]") ,lists.getClass());
+    }
+
 }
