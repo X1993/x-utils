@@ -132,6 +132,7 @@ public class IdempotentTaskTrigger implements Runnable{
         {
             Thread currentExclusiveThread = exclusiveSign.get();
             if (currentExclusiveThread != null){
+                //重复获取
                 return currentExclusiveThread == Thread.currentThread();
             }
             return exclusiveSign.compareAndSet(null ,Thread.currentThread());

@@ -12,7 +12,7 @@ import java.util.function.Supplier;
  * 回收策略：锁对象不可达（没用引用关系）时回收
  * <p>
  *     //使用方式
- *     RecyclableLock<String ,Object> recyclableLock = new WeakReferenceRecyclableLock<>();
+ *     RecyclableLock<String ,Object> recyclableLock = new WeakReferenceLock<>();
  *     Object lock = recyclableLock.getLock("lockKey0", Object::new);
  *     synchronized (lock){
  *         // 代码
@@ -22,7 +22,7 @@ import java.util.function.Supplier;
  * @date 2022/11/25
  * @description
  */
-public class WeakReferenceRecyclableLock<K ,L> implements RecyclableLock<K ,L> {
+public class WeakReferenceLock<K ,L> implements RecyclableLock<K ,L> {
 
     /**
      * 回收队列
@@ -49,12 +49,14 @@ public class WeakReferenceRecyclableLock<K ,L> implements RecyclableLock<K ,L> {
     @Override
     public L getLock(K lockKey, Supplier<L> lockSupplier)
     {
+        //回收释放的锁
+        recycleReferenceRunnable.run();
+
         L lock = getLockIfExist(lockKey);
         if (lock != null){
             return lock;
         }
 
-        Map<K, LockReference<K ,L>> lockReferences = getLockReferences();
         synchronized (lockReferences){
             lock = getLockIfExist(lockKey);
             if (lock != null){
@@ -73,7 +75,7 @@ public class WeakReferenceRecyclableLock<K ,L> implements RecyclableLock<K ,L> {
      * @return
      */
     private L getLockIfExist(K lockKey){
-        LockReference<K ,L> lockReference = getLockReferences().get(lockKey);
+        LockReference<K ,L> lockReference = lockReferences.get(lockKey);
         if (lockReference != null){
             L lock = lockReference.get();
             if (lock != null){
@@ -81,11 +83,6 @@ public class WeakReferenceRecyclableLock<K ,L> implements RecyclableLock<K ,L> {
             }
         }
         return null;
-    }
-
-    private Map<K , LockReference<K ,L>> getLockReferences(){
-        recycleReferenceRunnable.run();
-        return lockReferences;
     }
 
     /**
@@ -100,7 +97,7 @@ public class WeakReferenceRecyclableLock<K ,L> implements RecyclableLock<K ,L> {
             if (getLockIfExist(lockKey) != null){
                 continue;
             }
-            Map<K, LockReference<K ,L>> lockReferences = getLockReferences();
+
             synchronized (lockReferences){
                 if (getLockIfExist(lockKey) != null){
                     continue;

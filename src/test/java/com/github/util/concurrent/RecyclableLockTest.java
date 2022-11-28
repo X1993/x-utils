@@ -3,8 +3,6 @@ package com.github.util.concurrent;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.function.Supplier;
-
 /**
  * @author wangjj7
  * @date 2022/11/25
@@ -14,11 +12,7 @@ public class RecyclableLockTest {
 
     @Test
     public void getLockTest() throws InterruptedException {
-        RecyclableLock<String ,Object> recyclableLock = new WeakReferenceRecyclableLock<>();
-        Object lock = recyclableLock.getLock("lockKey0", Object::new);
-        synchronized (lock){
-            // 代码
-        }
+        RecyclableLock<String ,Object> recyclableLock = new WeakReferenceLock<>();
 
         String key1 = "001";
         Object lock0 = recyclableLock.getLock(key1 ,Object::new);
