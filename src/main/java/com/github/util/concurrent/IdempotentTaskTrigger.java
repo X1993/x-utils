@@ -55,6 +55,7 @@ public class IdempotentTaskTrigger implements Runnable{
                 }finally {
                     if (!stateManager.getRefresh()) {
                         if (!stateManager.releaseExclusive()) {
+                            //不应该执行到这里，有bug！🤦‍
                             throw new IllegalStateException();
                         }
                         if (!stateManager.getRefresh()){
