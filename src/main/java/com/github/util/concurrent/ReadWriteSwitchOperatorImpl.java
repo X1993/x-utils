@@ -21,14 +21,14 @@ public class ReadWriteSwitchOperatorImpl implements ReadWriteSwitchOperator {
 
     public final static String WRITE_LOCK_KEY_SUFFIX = SEPARATOR + "lock";
 
-    final PointKeyOperator pointKeyOperator;
+    final PointerKeyOperator pointerKeyOperator;
 
     final LockOperator lockOperator;
 
-    public ReadWriteSwitchOperatorImpl(PointKeyOperator pointKeyOperator ,LockOperator lockOperator) {
-        Objects.requireNonNull(pointKeyOperator);
+    public ReadWriteSwitchOperatorImpl(PointerKeyOperator pointerKeyOperator, LockOperator lockOperator) {
+        Objects.requireNonNull(pointerKeyOperator);
         Objects.requireNonNull(lockOperator);
-        this.pointKeyOperator = pointKeyOperator;
+        this.pointerKeyOperator = pointerKeyOperator;
         this.lockOperator = lockOperator;
     }
 
@@ -68,7 +68,7 @@ public class ReadWriteSwitchOperatorImpl implements ReadWriteSwitchOperator {
 
             String pointerKey = getPointerKey(key);
             //指针从旧数据区切换到新数据区
-            pointKeyOperator.setOffset(pointerKey ,writeOffset);
+            pointerKeyOperator.setOffset(pointerKey ,writeOffset);
 
             if (readOffset != null && delOperator != null){
                 String oldWriteKey = getOffsetKey(key, readOffset);
@@ -101,7 +101,7 @@ public class ReadWriteSwitchOperatorImpl implements ReadWriteSwitchOperator {
         if (key == null || "".equals(key)){
             return null;
         }
-        return pointKeyOperator.getOffset(getPointerKey(key));
+        return pointerKeyOperator.getOffset(getPointerKey(key));
     }
 
     private Integer getReadOffset(Integer pointerOffset){

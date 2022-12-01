@@ -6,7 +6,7 @@ package com.github.util.concurrent;
  * @date 2022/11/28
  * @description
  */
-public interface PointKeyOperator {
+public interface PointerKeyOperator {
 
     /**
      * 获取指针偏移量
