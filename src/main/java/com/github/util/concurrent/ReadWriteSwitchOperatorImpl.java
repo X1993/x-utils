@@ -1,9 +1,11 @@
 package com.github.util.concurrent;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
+import static com.github.util.concurrent.ReadWriteSwitchConstant.*;
 
 /**
  * 读写切换操作
@@ -15,21 +17,36 @@ import java.util.function.Consumer;
 @Slf4j
 public class ReadWriteSwitchOperatorImpl implements ReadWriteSwitchOperator {
 
-    public final static String SEPARATOR = "&";
+    private final String separator;
 
-    public final static String POINTER_KEY_SUFFIX = SEPARATOR + "pointer";
+    private final String pointerKeySuffix;
 
-    public final static String WRITE_LOCK_KEY_SUFFIX = SEPARATOR + "lock";
+    private final String writeLockKeySuffix;
 
-    final PointerKeyOperator pointerKeyOperator;
+    private final PointerKeyOperator pointerKeyOperator;
 
-    final LockOperator lockOperator;
+    private final LockOperator lockOperator;
 
-    public ReadWriteSwitchOperatorImpl(PointerKeyOperator pointerKeyOperator, LockOperator lockOperator) {
+    public ReadWriteSwitchOperatorImpl(String separator,
+                                       String pointerKeySuffix,
+                                       String writeLockKeySuffix,
+                                       PointerKeyOperator pointerKeyOperator,
+                                       LockOperator lockOperator)
+    {
         Objects.requireNonNull(pointerKeyOperator);
         Objects.requireNonNull(lockOperator);
+
         this.pointerKeyOperator = pointerKeyOperator;
         this.lockOperator = lockOperator;
+        this.separator = StringUtils.isEmpty(separator) ? DEFAULT_SEPARATOR : separator;
+        this.pointerKeySuffix = StringUtils.isEmpty(pointerKeySuffix) ? DEFAULT_POINTER_KEY_SUFFIX : pointerKeySuffix;
+        this.writeLockKeySuffix = StringUtils.isEmpty(writeLockKeySuffix) ? DEFAULT_WRITE_LOCK_KEY_SUFFIX : writeLockKeySuffix;
+    }
+
+    public ReadWriteSwitchOperatorImpl(PointerKeyOperator pointerKeyOperator,
+                                       LockOperator lockOperator)
+    {
+        this(null ,null ,null ,pointerKeyOperator ,lockOperator);
     }
 
     @Override
@@ -39,7 +56,7 @@ public class ReadWriteSwitchOperatorImpl implements ReadWriteSwitchOperator {
 
     //获取映射的写锁键
     private String getWriteLockKey(String key){
-        return key + WRITE_LOCK_KEY_SUFFIX;
+        return key + writeLockKeySuffix;
     }
 
     @Override
@@ -90,15 +107,15 @@ public class ReadWriteSwitchOperatorImpl implements ReadWriteSwitchOperator {
     }
 
     private String getPointerKey(String key){
-        return key + POINTER_KEY_SUFFIX;
+        return key + pointerKeySuffix;
     }
 
     private String getOffsetKey(String key ,int pointerOffset){
-        return key + SEPARATOR + pointerOffset;
+        return key + separator + pointerOffset;
     }
 
     private Integer getPointerOffset(String key){
-        if (key == null || "".equals(key)){
+        if (StringUtils.isEmpty(key)){
             return null;
         }
         return pointerKeyOperator.getOffset(getPointerKey(key));

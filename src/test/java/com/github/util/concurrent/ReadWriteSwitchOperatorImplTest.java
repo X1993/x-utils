@@ -19,7 +19,7 @@ public class ReadWriteSwitchOperatorImplTest {
 
     private boolean write(String key ,String value ,long writeTime ,long maxBlockingMS)
     {
-        return readWriteSwitchRedisMock.write(key ,maxBlockingMS ,5000L ,
+        return readWriteSwitchRedisMock.write(key ,maxBlockingMS ,30000L ,
                 s -> {
                     System.out.println(MessageFormat.format("{0},{1}开始写入key:{2},value:{3}" ,
                             LocalDateTime.now() ,Thread.currentThread() ,s ,value));

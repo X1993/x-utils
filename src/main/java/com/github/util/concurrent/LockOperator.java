@@ -55,7 +55,7 @@ public interface LockOperator {
      * 原子操作
      * @param lockKey 锁标识
      * @param occupierId 占用者
-     * @return 释放释放锁成功，如果锁没有被占用或者占用者不匹配，返回false
+     * @return 锁释放成功或者没有被占用返回true，如果占用者不匹配，返回false
      */
     boolean releaseLock(String lockKey, String occupierId);
 
