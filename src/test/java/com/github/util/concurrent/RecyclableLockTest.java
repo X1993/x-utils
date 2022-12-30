@@ -19,7 +19,7 @@ public class RecyclableLockTest {
         String lockAddress0 = lock0.toString();
 
         System.gc();
-        Thread.sleep(1000);
+        Thread.sleep(1000);//wait gc
 
         Object lock1 = recyclableLock.getLock(key1 ,Object::new);
         Assert.assertTrue(lock0 == lock1);
@@ -27,7 +27,7 @@ public class RecyclableLockTest {
         lock0 = null;
         lock1 = null;
         System.gc();
-        Thread.sleep(1000);
+        Thread.sleep(1000);//wait gc
 
         Object lock2 = recyclableLock.getLock(key1 ,Object::new);
         String lockAddress2 = lock2.toString();

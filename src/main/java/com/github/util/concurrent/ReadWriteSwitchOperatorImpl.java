@@ -71,8 +71,7 @@ public class ReadWriteSwitchOperatorImpl implements ReadWriteSwitchOperator {
             return false;
         }
 
-        log.debug("get writeLock:{},occupierId:{},lockTimeoutMS:{}" ,
-                writeLockKey ,occupierId , lockExpiredMS);
+        log.debug("get writeLock:{},occupierId:{},lockTimeoutMS:{}" ,writeLockKey ,occupierId , lockExpiredMS);
 
         try {
             Integer pointerOffset = getPointerOffset(key);
@@ -100,8 +99,7 @@ public class ReadWriteSwitchOperatorImpl implements ReadWriteSwitchOperator {
             // 释放锁
             boolean releaseResult = lockOperator.releaseLock(writeLockKey, occupierId);
             if (releaseResult) {
-                log.debug("release writeLock:{},occupierId:{}",
-                        writeLockKey, occupierId);
+                log.debug("release writeLock:{},occupierId:{}", writeLockKey, occupierId);
             }
         }
     }
