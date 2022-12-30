@@ -1,6 +1,10 @@
 package com.github.util.concurrent;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -47,18 +51,18 @@ public class IdempotentTaskTrigger implements Runnable{
     public void run()
     {
         while (true){
-            if (stateManager.tryExclusive()) {
+            if (stateManager.tryOccupy()) {
                 //可以合并执行
-                stateManager.setRefresh(false);
+                stateManager.resetRefresh();
                 try {
                     task.run();
                 }finally {
-                    if (!stateManager.getRefresh()) {
-                        if (!stateManager.releaseExclusive()) {
+                    if (!stateManager.isRefresh()) {
+                        if (!stateManager.release()) {
                             //不应该执行到这里，有bug！🤦‍
                             throw new IllegalStateException();
                         }
-                        if (!stateManager.getRefresh()){
+                        if (!stateManager.isRefresh()) {
                             //确保在解除占用标记的过程中没有新的执行请求
                             return;
                         }
@@ -67,7 +71,7 @@ public class IdempotentTaskTrigger implements Runnable{
                 }
             }else {
                 //抢占失败，通知当前任务执行线程
-                stateManager.setRefresh(true);
+                stateManager.refresh();
                 if (stateManager.isExclusive()){
                     //确保执行中的线程能收到通知
                     return;
@@ -86,12 +90,12 @@ public class IdempotentTaskTrigger implements Runnable{
          * 尝试设置独占状态，可重入
          * @return
          */
-        boolean tryExclusive();
+        boolean tryOccupy();
 
         /**
          * 解除独占状态
          */
-        boolean releaseExclusive();
+        boolean release();
 
         /**
          * 是否存在独占状态
@@ -100,16 +104,28 @@ public class IdempotentTaskTrigger implements Runnable{
         boolean isExclusive();
 
         /**
-         * 设置刷新状态
-         * @param refreshSign
+         * 刷新次数加一
          */
-        void setRefresh(boolean refreshSign);
+        int refresh();
 
         /**
-         * 获取刷新状态
+         * 重置刷新次数
+         */
+        void resetRefresh();
+
+        /**
+         * 获取刷新次数
          * @return
          */
-        boolean getRefresh();
+        int refreshCount();
+
+        /**
+         * 是否有刷新
+         * @return
+         */
+        default boolean isRefresh(){
+            return refreshCount() > 0;
+        }
 
     }
 
@@ -121,42 +137,95 @@ public class IdempotentTaskTrigger implements Runnable{
         /**
          * 独占标记
          */
-        private final AtomicReference<Thread> exclusiveSign = new AtomicReference();
+        private final AtomicReference<ExclusiveContent> exclusiveState = new AtomicReference();
 
         /**
          * 刷新标记
          */
-        private volatile boolean refreshSign = false;
+        private final AtomicInteger refreshCount = new AtomicInteger();
 
         @Override
-        public boolean tryExclusive()
+        public boolean tryOccupy()
         {
-            Thread currentExclusiveThread = exclusiveSign.get();
-            if (currentExclusiveThread != null){
-                //重复获取
-                return currentExclusiveThread == Thread.currentThread();
+            Thread thread = Thread.currentThread();
+            while (true) {
+                ExclusiveContent exclusiveContent = exclusiveState.get();
+                if (exclusiveContent != null) {
+                    if (exclusiveContent.getThread() == thread) {
+                        //重入
+                        if (exclusiveState.compareAndSet(exclusiveContent,
+                                new ExclusiveContent(thread, exclusiveContent.reentriesCount + 1))){
+                            return true;
+                        }
+                    } else {
+                        //被占用
+                        return false;
+                    }
+                } else {
+                    //尝试占用
+                    if (exclusiveState.compareAndSet(null ,new ExclusiveContent(thread ,1))){
+                        return true;
+                    }
+                }
             }
-            return exclusiveSign.compareAndSet(null ,Thread.currentThread());
         }
 
         @Override
-        public boolean releaseExclusive() {
-            return exclusiveSign.compareAndSet(Thread.currentThread(), null);
+        public boolean release()
+        {
+            while (true) {
+                ExclusiveContent exclusiveContent = exclusiveState.get();
+                if (exclusiveContent == null) {
+                    return true;
+                }
+                Thread occupyThread = exclusiveContent.getThread();
+                Thread currentThread = Thread.currentThread();
+                if (currentThread != occupyThread) {
+                    return false;
+                }
+                int reentriesCount = exclusiveContent.getReentriesCount();
+                if (reentriesCount > 1) {
+                    if (exclusiveState.compareAndSet(exclusiveContent,
+                            new ExclusiveContent(currentThread, reentriesCount - 1))){
+                        return true;
+                    }
+                } else {
+                    if (exclusiveState.compareAndSet(exclusiveContent, null)){
+                        return true;
+                    }
+                }
+            }
         }
 
         @Override
         public boolean isExclusive() {
-            return exclusiveSign.get() != null;
+            return exclusiveState.get() != null;
         }
 
         @Override
-        public void setRefresh(boolean refreshSign) {
-            this.refreshSign = refreshSign;
+        public int refresh() {
+            return refreshCount.incrementAndGet();
         }
 
         @Override
-        public boolean getRefresh() {
-            return this.refreshSign;
+        public void resetRefresh() {
+            refreshCount.set(0);
+        }
+
+        @Override
+        public int refreshCount() {
+            return refreshCount.get();
+        }
+
+        @NoArgsConstructor
+        @AllArgsConstructor
+        @Data
+        private class ExclusiveContent{
+
+            private Thread thread;
+
+            private int reentriesCount;
+
         }
 
     }
