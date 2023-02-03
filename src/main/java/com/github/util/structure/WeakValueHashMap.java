@@ -1,7 +1,5 @@
 package com.github.util.structure;
 
-import com.github.util.concurrent.ConcurrentWeakValueHashMap;
-
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
