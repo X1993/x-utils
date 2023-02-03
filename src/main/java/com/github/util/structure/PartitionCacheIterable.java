@@ -6,7 +6,7 @@ import java.util.function.Function;
 
 /**
  * 分区缓存迭代
- * 例：对某张大表数据迭代，避免过程中消耗太多内存
+ * 例：对某张大表数据迭代，避免过程中消耗太多内存 （可参考单元测试）
  * @author X1993
  * @date 2023/2/3
  * @description
