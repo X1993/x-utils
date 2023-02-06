@@ -57,6 +57,8 @@ public class MethodHandleUtils {
      * 对于默认方法不可以通过{@link Method#invoke(Object, Object...)}的方式执行，因为不存在被代理对象，
      * 如果使用代理对象执行会陷入死循环。此时可以通过这种方式实现
      *
+     * 参考 mybatis源码MapperProxy
+     *
      * @param target 实现了定义默认方法的接口的实现类对象
      * @param method 默认方法 {@link Method#isDefault()} == true
      * @param args 执行参数
