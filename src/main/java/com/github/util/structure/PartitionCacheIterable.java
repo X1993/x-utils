@@ -1,21 +1,21 @@
 package com.github.util.structure;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.function.Function;
 
 /**
  * 分区缓存迭代
- * 例：对某张大表数据迭代，避免过程中消耗太多内存 （可参考单元测试）
+ * 例：大表数据迭代，避免过程中消耗太多内存 （可参考单元测试）
  * @author X1993
  * @date 2023/2/3
  * @description
  */
 public class PartitionCacheIterable<T> implements Iterable<T> {
 
-    private final Function<T ,List<T>> partitionQueryFunction;
+    // Iterable要有序
+    private final Function<T ,Iterable<T>> partitionQueryFunction;
 
-    public PartitionCacheIterable(Function<T, List<T>> partitionQueryFunction) {
+    public PartitionCacheIterable(Function<T, Iterable<T>> partitionQueryFunction) {
         this.partitionQueryFunction = partitionQueryFunction;
     }
 
@@ -25,14 +25,14 @@ public class PartitionCacheIterable<T> implements Iterable<T> {
      * @param <T>
      * @return
      */
-    public static <T> PartitionCacheIterable<T> pageIterable(Function<Integer ,List<T>> pageQueryFunction){
-        return new PartitionCacheIterable<>(new Function<T, List<T>>() {
+    public static <T> PartitionCacheIterable<T> pageIterable(Function<Integer ,Iterable<T>> pageQueryFunction){
+        return new PartitionCacheIterable<>(new Function<T, Iterable<T>>() {
 
             //分页下标
             int pageIndex = 0;
 
             @Override
-            public List<T> apply(T t) {
+            public Iterable<T> apply(T t) {
                 return pageQueryFunction.apply(pageIndex++);
             }
 
@@ -43,10 +43,10 @@ public class PartitionCacheIterable<T> implements Iterable<T> {
     public Iterator<T> iterator() {
         return new Iterator<T>(){
 
-            //当前缓存的分区迭代器
+            //当前缓存的分区迭代器，有序
             private Iterator<T> cacheIterator;
 
-            //已遍历的最大元素
+            //已遍历的最后一个元素
             private T last;
 
             @Override

@@ -6,7 +6,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -47,7 +46,7 @@ public class PartitionCacheIterableTest {
         int pageSize = 10;
 
         //模拟分区查询
-        Function<Row ,List<Row>> partitionQueryFunction = lastedRow -> Arrays.stream(TABLE)
+        Function<Row ,Iterable<Row>> partitionQueryFunction = lastedRow -> Arrays.stream(TABLE)
                 .filter(row1 -> lastedRow == null || row1.getPkId() > lastedRow.getPkId())
                 .sorted(Comparator.comparing(Row::getPkId))
                 .limit(pageSize)
