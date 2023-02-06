@@ -23,7 +23,15 @@ public class WeakValueHashMap<K ,V> implements Map<K ,V> {
     /**
      * 实际存储的map
      */
-    private final HashMap<K ,ValueReference<K ,V>> map = new HashMap<>();
+    private final Map<K ,ValueReference<K ,V>> map;
+
+    public WeakValueHashMap() {
+        this(new HashMap<>());
+    }
+
+    public WeakValueHashMap(Map<K, ValueReference<K, V>> map) {
+        this.map = map;
+    }
 
     @Override
     public int size() {
@@ -146,7 +154,7 @@ public class WeakValueHashMap<K ,V> implements Map<K ,V> {
     }
 
     //释放不再引用的锁相关资源
-    private void recycleReference(){
+    protected final void recycleReference(){
         Reference reference = null;
         while ((reference = referenceQueue.poll()) != null){
             ValueReference<K ,V> valueReference = (ValueReference<K ,V>) reference;
@@ -154,7 +162,20 @@ public class WeakValueHashMap<K ,V> implements Map<K ,V> {
         }
     }
 
-    static class ValueReference<K ,V> extends WeakReference<V> {
+    @Override
+    public boolean replace(K key, V oldValue, V newValue) {
+        return Map.super.replace(key, oldValue, newValue);
+    }
+
+    protected Map<K, ValueReference<K, V>> getMap() {
+        return map;
+    }
+
+    protected ValueReference createReference(K key, V value){
+        return new ValueReference<>(key, value, referenceQueue);
+    }
+
+    protected static class ValueReference<K ,V> extends WeakReference<V> {
 
         private final K key;
 
@@ -181,5 +202,6 @@ public class WeakValueHashMap<K ,V> implements Map<K ,V> {
         }
 
     }
+
     
 }
