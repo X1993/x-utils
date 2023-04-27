@@ -9,7 +9,12 @@ import com.github.util.structure.iterator.limit.XLimitIterable;
  */
 public interface XIterable<T> extends Iterable<T>{
 
-    default XIterable limit(int limit){
+    /**
+     * 限制最大迭代次数
+     * @param limit 最大迭代次数
+     * @return
+     */
+    default XIterable<T> limit(int limit){
         return new XLimitIterable(this ,limit);
     }
 
