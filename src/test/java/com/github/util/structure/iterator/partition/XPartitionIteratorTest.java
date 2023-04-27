@@ -21,17 +21,13 @@ public class XPartitionIteratorTest {
         int maxVal = 100;
         int[] mockTable = IntStream.range(minVal ,maxVal + 1).unordered().toArray();
 
-        XPartitionIterable<Integer> iterable = new XPartitionIterable<>(list -> {
-            int gtVal = (list == null || list.isEmpty()) ?
-                    Integer.MIN_VALUE : list.stream().mapToInt(Integer::intValue).max().orElse(Integer.MIN_VALUE);
-
-            return IntStream.of(mockTable)
+        XPartitionIterable<Integer> iterable = new XPartitionIterable<>(prePartitionLastElement ->
+            IntStream.of(mockTable)
                     .sorted()
-                    .filter(x -> x > gtVal)
+                    .filter(x -> prePartitionLastElement == null || x > prePartitionLastElement)
                     .limit(10)
                     .mapToObj(Integer::valueOf)
-                    .collect(Collectors.toList());
-        });
+                    .collect(Collectors.toList()));
 
         Iterator<Integer> iterator = iterable.iterator();
         for (int i = minVal; i <= maxVal; i++) {

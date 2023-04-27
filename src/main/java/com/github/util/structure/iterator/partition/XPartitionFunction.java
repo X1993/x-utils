@@ -11,9 +11,10 @@ import java.util.List;
 public interface XPartitionFunction<T> {
 
     /**
-     * @param prePartitionList 上一个分区查询结果
-     * @return 下一个分区查询结果
+     * 查询下一个分区
+     * @param prePartitionLastElement 上个分区最后一个元素
+     * @return
      */
-    List<T> select(List<T> prePartitionList);
+    List<T> select(T prePartitionLastElement);
 
 }

@@ -1,9 +1,6 @@
 package com.github.util.structure.iterator.partition;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 /**
  * 内部基于分区实现的迭代器
@@ -15,7 +12,7 @@ public class XPartitionIterator<T> implements Iterator<T> {
 
     private List<T> partitionResult = Collections.EMPTY_LIST;
 
-    private final XPartitionFunction partitionFunction;
+    private final XPartitionFunction<T> partitionFunction;
 
     private int nextIndex;
 
@@ -36,7 +33,10 @@ public class XPartitionIterator<T> implements Iterator<T> {
             if (finished) {
                 return false;
             }
-            partitionResult = partitionFunction.select(partitionResult);
+            T prePartitionLastElement = partitionResult.isEmpty() ?
+                    null : partitionResult.get(partitionResult.size() - 1);
+
+            partitionResult = partitionFunction.select(prePartitionLastElement);
             nextIndex = 0;
             if (partitionResult == null || partitionResult.isEmpty()) {
                 //没有更多数据了
