@@ -1,4 +1,4 @@
-package com.github.util.structure.iterator;
+package com.github.util.structure.iterator.page;
 
 /**
  * @author X1993

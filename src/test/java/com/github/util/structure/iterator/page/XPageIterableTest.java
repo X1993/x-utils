@@ -1,10 +1,11 @@
-package com.github.util.structure.iterator;
+package com.github.util.structure.iterator.page;
 
 import org.junit.Assert;
 import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -42,12 +43,18 @@ public class XPageIterableTest {
 
         Iterator<Integer> iterator = pageIterable.iterator();
         for (int i = minVal; i <= maxVal; i++) {
-            boolean hasNext = iterator.hasNext();
-            Assert.assertTrue(hasNext);
-            boolean nextVal = Integer.valueOf(i).equals(iterator.next());
-            Assert.assertTrue(nextVal);
+            Assert.assertTrue(iterator.hasNext());
+            Assert.assertTrue(Integer.valueOf(i).equals(iterator.next()));
         }
+
         Assert.assertFalse(iterator.hasNext());
+        try {
+            iterator.next();
+        }catch (NoSuchElementException e){
+            return;
+        }
+
+        throw new IllegalStateException();
     }
 
 }

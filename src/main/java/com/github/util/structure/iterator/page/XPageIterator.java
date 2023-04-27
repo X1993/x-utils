@@ -1,9 +1,6 @@
-package com.github.util.structure.iterator;
+package com.github.util.structure.iterator.page;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 利用分页实现迭代，避免内存溢出
@@ -13,7 +10,7 @@ import java.util.Objects;
  */
 public class XPageIterator<T> implements Iterator<T>{
 
-    private final XPageFunction<T> xPageFunction;
+    private final XPageFunction<T> pageFunction;
 
     private final int pageSize;
 
@@ -21,9 +18,9 @@ public class XPageIterator<T> implements Iterator<T>{
 
     private int nextIndex = 0;
 
-    public XPageIterator(XPageFunction<T> xPageFunction, int pageSize) {
-        Objects.requireNonNull(xPageFunction);
-        this.xPageFunction = xPageFunction;
+    public XPageIterator(XPageFunction<T> pageFunction, int pageSize) {
+        Objects.requireNonNull(pageFunction);
+        this.pageFunction = pageFunction;
 
         if (pageSize < 1){
             throw new IllegalArgumentException();
@@ -31,8 +28,8 @@ public class XPageIterator<T> implements Iterator<T>{
         this.pageSize = pageSize;
     }
 
-    public XPageIterator(XPageFunction<T> xPageFunction){
-        this(xPageFunction,200);
+    public XPageIterator(XPageFunction<T> pageFunction){
+        this(pageFunction,200);
     }
 
     /**
@@ -52,7 +49,10 @@ public class XPageIterator<T> implements Iterator<T>{
     @Override
     public T next() {
         int resultIndex = getResultIndex(nextIndex++);
-        return resultIndex < 0 ? null : getResults().get(resultIndex);
+        if (resultIndex < 0){
+            throw new NoSuchElementException();
+        }
+        return getResults().get(resultIndex);
     }
 
     private int getResultIndex(int index) {
@@ -71,7 +71,7 @@ public class XPageIterator<T> implements Iterator<T>{
                 }
             }
             //根据index定位到指定的分页结果集
-            pageResult = xPageFunction.select(new XPageParamImpl(index / pageSize + 1, pageSize));
+            pageResult = pageFunction.select(new XPageParamImpl(index / pageSize + 1, pageSize));
             //check result
             if (pageResult == null){
                 throw new IllegalArgumentException("pageFunction查询结果不能是null");

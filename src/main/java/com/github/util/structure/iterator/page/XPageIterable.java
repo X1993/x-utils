@@ -1,4 +1,4 @@
-package com.github.util.structure.iterator;
+package com.github.util.structure.iterator.page;
 
 import java.util.Iterator;
 
@@ -12,12 +12,12 @@ public class XPageIterable<T> implements Iterable<T>{
 
     private XPageIterator<T> iterator;
 
-    public XPageIterable(XPageFunction<T> xPageFunction, int pageSize) {
-        this.iterator = new XPageIterator<>(xPageFunction, pageSize);
+    public XPageIterable(XPageFunction<T> pageFunction, int pageSize) {
+        this.iterator = new XPageIterator<>(pageFunction, pageSize);
     }
 
-    public XPageIterable(XPageFunction<T> xPageFunction){
-        this.iterator = new XPageIterator<>(xPageFunction);
+    public XPageIterable(XPageFunction<T> pageFunction){
+        this.iterator = new XPageIterator<>(pageFunction);
     }
 
     @Override

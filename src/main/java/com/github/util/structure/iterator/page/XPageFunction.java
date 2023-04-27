@@ -1,4 +1,4 @@
-package com.github.util.structure.iterator;
+package com.github.util.structure.iterator.page;
 
 /**
  * 分页查询函数
