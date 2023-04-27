@@ -23,6 +23,10 @@ public class XPageResultImpl<T> implements XPageResult<T>{
         this.results = results;
     }
 
+    public XPageResultImpl(XPageParam pageParam ,List<T> results){
+        this(pageParam.pageIndex(),  pageParam.pageSize() ,results);
+    }
+
     @Override
     public int pageIndex() {
         return pageIndex;

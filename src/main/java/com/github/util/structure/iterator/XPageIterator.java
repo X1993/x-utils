@@ -35,6 +35,14 @@ public class XPageIterator<T> implements Iterator<T>{
         this(xPageFunction,200);
     }
 
+    /**
+     * 重置下一条记录读取位置
+     * @param index
+     */
+    public void resetIndex(int index){
+        getResultIndex(index);
+    }
+
     @Override
     public boolean hasNext()
     {
