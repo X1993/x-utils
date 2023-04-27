@@ -1,5 +1,6 @@
 package com.github.util.structure.iterator.page;
 
+import com.github.util.structure.iterator.XIterable;
 import java.util.Iterator;
 
 /**
@@ -8,7 +9,7 @@ import java.util.Iterator;
  * @date 2023/4/25
  * @description
  */
-public class XPageIterable<T> implements Iterable<T>{
+public class XPageIterable<T> implements XIterable<T> {
 
     private XPageIterator<T> iterator;
 

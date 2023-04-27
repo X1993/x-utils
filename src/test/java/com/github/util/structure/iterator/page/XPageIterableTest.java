@@ -1,11 +1,11 @@
 package com.github.util.structure.iterator.page;
 
-import org.junit.Assert;
+import com.github.util.structure.iterator.IterableUtils;
 import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -42,19 +42,13 @@ public class XPageIterableTest {
         XPageIterable<Integer> pageIterable = new XPageIterable<>(pageFunction ,pageSize);
 
         Iterator<Integer> iterator = pageIterable.iterator();
-        for (int i = minVal; i <= maxVal; i++) {
-            Assert.assertTrue(iterator.hasNext());
-            Assert.assertTrue(Integer.valueOf(i).equals(iterator.next()));
-        }
+        IterableUtils.validation(minVal ,maxVal ,iterator);
 
-        Assert.assertFalse(iterator.hasNext());
-        try {
-            iterator.next();
-        }catch (NoSuchElementException e){
-            return;
-        }
-
-        throw new IllegalStateException();
+        //测试重置
+        int resetVal = ThreadLocalRandom.current().nextInt(minVal, maxVal) + minVal;
+        XPageIterator<Integer> pageIterator = (XPageIterator<Integer>) iterator;
+        pageIterator.resetIndex(resetVal - 1);
+        IterableUtils.validation(minVal + resetVal - 1 ,maxVal ,iterator);
     }
 
 }

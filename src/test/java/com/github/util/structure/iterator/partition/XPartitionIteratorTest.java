@@ -1,9 +1,7 @@
 package com.github.util.structure.iterator.partition;
 
-import org.junit.Assert;
+import com.github.util.structure.iterator.IterableUtils;
 import org.junit.Test;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -29,20 +27,7 @@ public class XPartitionIteratorTest {
                     .mapToObj(Integer::valueOf)
                     .collect(Collectors.toList()));
 
-        Iterator<Integer> iterator = iterable.iterator();
-        for (int i = minVal; i <= maxVal; i++) {
-            Assert.assertTrue(iterator.hasNext());
-            Assert.assertTrue(Integer.valueOf(i).equals(iterator.next()));
-        }
-
-        Assert.assertFalse(iterator.hasNext());
-        try {
-            iterator.next();
-        }catch (NoSuchElementException e){
-            return;
-        }
-
-        throw new IllegalStateException();
+        IterableUtils.validation(minVal ,maxVal ,iterable.iterator());
     }
 
 }

@@ -1,5 +1,6 @@
 package com.github.util.structure.iterator.page;
 
+import com.github.util.structure.iterator.XIterator;
 import java.util.*;
 
 /**
@@ -8,7 +9,7 @@ import java.util.*;
  * @date 2023/4/25
  * @description
  */
-public class XPageIterator<T> implements Iterator<T>{
+public class XPageIterator<T> implements XIterator<T> {
 
     private final XPageFunction<T> pageFunction;
 
@@ -16,7 +17,7 @@ public class XPageIterator<T> implements Iterator<T>{
 
     private XPageResult<T> pageResult;
 
-    private int nextIndex = 0;
+    private int nextIndex;
 
     public XPageIterator(XPageFunction<T> pageFunction, int pageSize) {
         Objects.requireNonNull(pageFunction);
@@ -37,7 +38,7 @@ public class XPageIterator<T> implements Iterator<T>{
      * @param index
      */
     public void resetIndex(int index){
-        getResultIndex(index);
+        getResultIndex(nextIndex = index);
     }
 
     @Override

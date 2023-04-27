@@ -9,6 +9,11 @@ package com.github.util.structure.iterator.page;
 @FunctionalInterface
 public interface XPageFunction<T> {
 
+    /**
+     * 根据分页参数查询
+     * @param param
+     * @return
+     */
     XPageResult<T> select(XPageParam param);
 
 }

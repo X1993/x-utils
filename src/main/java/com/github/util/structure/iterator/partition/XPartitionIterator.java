@@ -1,5 +1,6 @@
 package com.github.util.structure.iterator.partition;
 
+import com.github.util.structure.iterator.XIterator;
 import java.util.*;
 
 /**
@@ -8,7 +9,7 @@ import java.util.*;
  * @date 2023/4/27
  * @description
  */
-public class XPartitionIterator<T> implements Iterator<T> {
+public class XPartitionIterator<T> implements XIterator<T> {
 
     private List<T> partitionResult = Collections.EMPTY_LIST;
 
@@ -19,6 +20,7 @@ public class XPartitionIterator<T> implements Iterator<T> {
     private boolean finished;
 
     public XPartitionIterator(XPartitionFunction<T> partitionFunction) {
+        Objects.requireNonNull(partitionFunction);
         this.partitionFunction = partitionFunction;
     }
 
