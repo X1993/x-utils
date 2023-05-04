@@ -31,12 +31,12 @@ public class XPageIterableTest {
             int endIndex = startIndex + param.pageSize() - 1;
             int maxIndex = mockTable.length - 1;
             if (startIndex > maxIndex){
-                return new XPageResultImpl<>(param , Collections.emptyList());
+                return Collections.emptyList();
             }
-            return new XPageResultImpl<>(param ,Arrays.stream(
+            return Arrays.stream(
                             Arrays.copyOfRange(mockTable, Math.min(startIndex ,maxIndex), Math.min(endIndex ,maxIndex) + 1))
                     .boxed()
-                    .collect(Collectors.toList()));
+                    .collect(Collectors.toList());
         };
 
         XPageIterable<Integer> pageIterable = new XPageIterable<>(pageFunction ,pageSize);

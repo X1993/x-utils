@@ -11,13 +11,13 @@ import java.util.*;
  */
 public class XPartitionIterator<T> implements XIterator<T> {
 
-    private List<T> partitionResult = Collections.EMPTY_LIST;
+    private Iterator<T> partitionIterator = Collections.EMPTY_LIST.iterator();
 
     private final XPartitionFunction<T> partitionFunction;
 
-    private int nextIndex;
-
     private boolean finished;
+
+    private T preElement;
 
     public XPartitionIterator(XPartitionFunction<T> partitionFunction) {
         Objects.requireNonNull(partitionFunction);
@@ -28,31 +28,26 @@ public class XPartitionIterator<T> implements XIterator<T> {
     public boolean hasNext()
     {
         while (true) {
-            if (nextIndex < partitionResult.size()) {
+            if (partitionIterator.hasNext()) {
                 return true;
             }
             //跳到下一个分区
             if (finished) {
                 return false;
             }
-            T prePartitionLastElement = partitionResult.isEmpty() ?
-                    null : partitionResult.get(partitionResult.size() - 1);
 
-            partitionResult = partitionFunction.select(prePartitionLastElement);
-            nextIndex = 0;
-            if (partitionResult == null || partitionResult.isEmpty()) {
+            partitionIterator = partitionFunction.select(preElement).iterator();
+            if (!partitionIterator.hasNext()) {
                 //没有更多数据了
                 finished = true;
+                return false;
             }
         }
     }
 
     @Override
     public T next() {
-        if (nextIndex < partitionResult.size()) {
-            return partitionResult.get(nextIndex++);
-        }
-        throw new NoSuchElementException();
+        return preElement = partitionIterator.next();
     }
 
 }

@@ -1,7 +1,5 @@
 package com.github.util.structure.iterator.partition;
 
-import java.util.List;
-
 /**
  * @author X1993
  * @date 2023/4/27
@@ -15,6 +13,6 @@ public interface XPartitionFunction<T> {
      * @param prePartitionLastElement 上个分区最后一个元素
      * @return
      */
-    List<T> select(T prePartitionLastElement);
+    Iterable<T> select(T prePartitionLastElement);
 
 }
