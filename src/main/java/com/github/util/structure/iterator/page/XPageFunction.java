@@ -1,5 +1,7 @@
 package com.github.util.structure.iterator.page;
 
+import java.util.List;
+
 /**
  * 分页查询函数
  * @author X1993
@@ -14,6 +16,6 @@ public interface XPageFunction<T> {
      * @param param
      * @return
      */
-    XPageResult<T> select(XPageParam param);
+    List<T> select(XPageParam param);
 
 }
