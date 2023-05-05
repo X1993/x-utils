@@ -1,7 +1,6 @@
 package com.github.util.structure.iterator;
 
 import com.github.util.structure.iterator.limit.XLimitIterator;
-
 import java.util.Iterator;
 
 /**

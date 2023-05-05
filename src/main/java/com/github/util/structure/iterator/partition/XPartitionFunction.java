@@ -10,9 +10,9 @@ public interface XPartitionFunction<T> {
 
     /**
      * 查询下一个分区
-     * @param prePartitionLastElement 上个分区最后一个元素
+     * @param preElement 上一个遍历的元素
      * @return
      */
-    Iterable<T> select(T prePartitionLastElement);
+    Iterable<T> select(T preElement);
 
 }

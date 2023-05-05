@@ -19,10 +19,10 @@ public class XPartitionIteratorTest {
         int maxVal = 100;
         int[] mockTable = IntStream.range(minVal ,maxVal + 1).unordered().toArray();
 
-        XPartitionIterable<Integer> iterable = new XPartitionIterable<>(prePartitionLastElement ->
+        XPartitionIterable<Integer> iterable = new XPartitionIterable<>(preElement ->
             IntStream.of(mockTable)
                     .sorted()
-                    .filter(x -> prePartitionLastElement == null || x > prePartitionLastElement)
+                    .filter(x -> preElement == null || x > preElement)
                     .limit(10)
                     .mapToObj(Integer::valueOf)
                     .collect(Collectors.toList()));
