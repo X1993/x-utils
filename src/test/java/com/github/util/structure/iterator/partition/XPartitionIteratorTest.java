@@ -1,6 +1,6 @@
 package com.github.util.structure.iterator.partition;
 
-import com.github.util.structure.iterator.IterableUtilsTest;
+import com.github.util.structure.iterator.XIterableUtilsTest;
 import org.junit.Test;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -27,7 +27,7 @@ public class XPartitionIteratorTest {
                     .mapToObj(Integer::valueOf)
                     .collect(Collectors.toList()));
 
-        IterableUtilsTest.validation(minVal ,maxVal ,iterable.iterator());
+        XIterableUtilsTest.validation(minVal ,maxVal ,iterable.iterator());
     }
 
 }

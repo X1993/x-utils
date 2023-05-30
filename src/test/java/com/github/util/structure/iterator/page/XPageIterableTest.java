@@ -1,6 +1,6 @@
 package com.github.util.structure.iterator.page;
 
-import com.github.util.structure.iterator.IterableUtilsTest;
+import com.github.util.structure.iterator.XIterableUtilsTest;
 import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,13 +42,13 @@ public class XPageIterableTest {
         XPageIterable<Integer> pageIterable = new XPageIterable<>(pageFunction ,pageSize);
 
         Iterator<Integer> iterator = pageIterable.iterator();
-        IterableUtilsTest.validation(minVal ,maxVal ,iterator);
+        XIterableUtilsTest.validation(minVal ,maxVal ,iterator);
 
         //测试重置
         int resetVal = ThreadLocalRandom.current().nextInt(minVal, maxVal) + minVal;
         XPageIterator<Integer> pageIterator = (XPageIterator<Integer>) iterator;
         pageIterator.resetIndex(resetVal - 1);
-        IterableUtilsTest.validation(minVal + resetVal - 1 ,maxVal ,iterator);
+        XIterableUtilsTest.validation(minVal + resetVal - 1 ,maxVal ,iterator);
     }
 
 }

@@ -14,7 +14,7 @@ import java.util.List;
  * @date 2023/5/30
  * @description
  */
-public class IterableUtils {
+public class XIterableUtils {
 
     /**
      * 限制最大迭代次数

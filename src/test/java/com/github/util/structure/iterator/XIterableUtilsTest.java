@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
  * @date 2023/4/27
  * @description
  */
-public class IterableUtilsTest {
+public class XIterableUtilsTest {
 
     public static void validation(int minVal , int maxVal , Iterator<Integer> iterator){
         for (int i = minVal; i <= maxVal; i++) {
@@ -44,7 +44,7 @@ public class IterableUtilsTest {
                 .mapToObj(Integer::valueOf)
                 .collect(Collectors.toList());
 
-        Iterable<List<Integer>> iterable = IterableUtils.split(list, 10);
+        Iterable<List<Integer>> iterable = XIterableUtils.split(list, 10);
         int beforeItem = -1;
         for (List<Integer> itemList : iterable) {
             for (Integer item : itemList) {
