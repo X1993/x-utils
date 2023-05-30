@@ -29,6 +29,8 @@ public class ConcurrentUtilsTest {
                 mockTask(500));
         long timeConsuming1 = System.currentTimeMillis() - startTimeMillis1;
         Assert.assertTrue(timeConsuming1 >= 1000);
+
+        ConcurrentUtils.parallel(null ,mockTask(500));
     }
 
     private Runnable mockTask(long timeConsuming){

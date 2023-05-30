@@ -1,6 +1,6 @@
 package com.github.util.structure.iterator.limit;
 
-import com.github.util.structure.iterator.IterableUtils;
+import com.github.util.structure.iterator.IterableUtilsTest;
 import org.junit.Test;
 import java.util.Iterator;
 import java.util.List;
@@ -22,7 +22,7 @@ public class XLimitIterableTest {
         List<Integer> list = IntStream.range(minVal ,maxVal).mapToObj(Integer::valueOf).collect(Collectors.toList());
         int limit = ThreadLocalRandom.current().nextInt(minVal, maxVal);
         Iterator<Integer> iterator = new XLimitIterable<>(list, limit).iterator();
-        IterableUtils.validation(minVal ,limit ,iterator);
+        IterableUtilsTest.validation(minVal ,limit ,iterator);
     }
 
 }
