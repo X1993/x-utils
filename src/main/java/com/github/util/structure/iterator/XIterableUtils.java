@@ -68,7 +68,7 @@ public class XIterableUtils {
         return new XPageIterable<>(pageFunction);
     }
 
-    public static <T> XPartitionIterable<T> partitionIterable(XPartitionFunction<T> partitionFunction){
+    public static <T ,P> XPartitionIterable<T ,P> partitionIterable(XPartitionFunction<T ,P> partitionFunction){
         return new XPartitionIterable<>(partitionFunction);
     }
     

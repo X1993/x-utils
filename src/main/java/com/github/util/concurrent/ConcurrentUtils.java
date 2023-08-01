@@ -33,6 +33,10 @@ public class ConcurrentUtils {
         return parallel(executor ,xTasks);
     }
 
+    public static Future parallel(Executor executor ,Runnable originalTask) {
+        return parallel(executor ,new Runnable[]{originalTask})[0];
+    }
+
     /**
      * 多个任务并行
      * @param executor
@@ -53,6 +57,10 @@ public class ConcurrentUtils {
         }
 
         return parallel(executor ,xTasks);
+    }
+
+    public static Future parallel(Executor executor ,Callable originalTask) {
+        return parallel(executor ,new Callable[]{originalTask})[0];
     }
 
     /**
@@ -102,6 +110,10 @@ public class ConcurrentUtils {
         }
 
         return futures;
+    }
+
+    public static Future parallel(Executor executor ,XRunnable xTask) {
+        return parallel(executor ,new XRunnable[]{xTask})[0];
     }
 
 }
