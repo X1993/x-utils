@@ -1,7 +1,6 @@
 package com.github.util.structure.iterator.partition;
 
 import com.github.util.structure.iterator.XIterator;
-
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -21,7 +20,7 @@ public class XPartitionIterator<T ,P> implements XIterator<T> {
 
     private boolean finished;
 
-    private XPartitionFunction.Output<T ,P> preOutput = new XPartitionFunction.Output<>();
+    private XPartitionFunction.Output<T ,P> preOutput;
 
     public XPartitionIterator(XPartitionFunction<T ,P> partitionFunction) {
         Objects.requireNonNull(partitionFunction);
@@ -40,10 +39,15 @@ public class XPartitionIterator<T ,P> implements XIterator<T> {
                 return false;
             }
 
-            //加载下一个分区
-            XPartitionFunction.Input<T ,P> input = new XPartitionFunction.Input<T ,P>()
-                    .setPrePartition(preOutput.getPartition())
-                    .setCurrentParam(preOutput.getNextParam());
+            XPartitionFunction.Input<T ,P> input = new XPartitionFunction.Input<T ,P>();
+            if (preOutput == null){
+                //第一个分区
+                input.setCurrentParam(partitionFunction.firstInputParam());
+            }else {
+                //加载下一个分区
+                input.setCurrentParam(preOutput.getNextParam())
+                        .setPrePartition(preOutput.getPartition());
+            }
 
             XPartitionFunction.Output<T ,P> output = partitionFunction.select(input);
             if (output == null){

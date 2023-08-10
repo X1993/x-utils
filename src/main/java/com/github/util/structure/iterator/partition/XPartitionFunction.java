@@ -23,6 +23,14 @@ public interface XPartitionFunction<T ,P> {
      */
     Output<T ,P> select(Input<T ,P> input);
 
+    /**
+     * 第一个分区的查询参数
+     * @return
+     */
+    default P firstInputParam(){
+        return null;
+    }
+
     @Data
     @Accessors(chain = true)
     @FieldDefaults(level = AccessLevel.PRIVATE)
