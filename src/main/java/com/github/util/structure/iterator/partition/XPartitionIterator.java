@@ -39,17 +39,17 @@ public class XPartitionIterator<T ,P> implements XIterator<T> {
                 return false;
             }
 
-            XPartitionFunction.Input<T ,P> input = new XPartitionFunction.Input<T ,P>();
+            XPartitionFunction.Output<T ,P> output;
             if (preOutput == null){
                 //第一个分区
-                input.setCurrentParam(partitionFunction.firstInputParam());
+                output = partitionFunction.selectFirst();
             }else {
                 //加载下一个分区
-                input.setCurrentParam(preOutput.getNextParam())
-                        .setPrePartition(preOutput.getPartition());
+                output = partitionFunction.select(new XPartitionFunction.Input<T ,P>()
+                        .setCurrentParam(preOutput.getNextParam())
+                        .setPrePartition(preOutput.getPartition()));
             }
 
-            XPartitionFunction.Output<T ,P> output = partitionFunction.select(input);
             if (output == null){
                 throw new IllegalStateException("分区加载函数返回值不允许为null");
             }

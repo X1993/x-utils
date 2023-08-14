@@ -24,6 +24,14 @@ public interface XPartitionFunction<T ,P> {
     Output<T ,P> select(Input<T ,P> input);
 
     /**
+     * 查询第一个分区
+     * @return
+     */
+    default Output<T ,P> selectFirst(){
+        return select(new Input<>().setCurrentParam(firstInputParam()).setPrePartition(Collections.EMPTY_LIST));
+    }
+
+    /**
      * 第一个分区的查询参数
      * @return
      */

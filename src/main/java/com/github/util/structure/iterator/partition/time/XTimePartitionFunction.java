@@ -21,12 +21,6 @@ public class XTimePartitionFunction<T ,P extends TimePartitionParam<P>> implemen
     private final P sourceParam;
 
     /**
-     * true:升序加载
-     * false:降序加载
-     */
-    private final boolean asc;
-
-    /**
      * 分区时长
      */
     private final int partitionSize;
@@ -41,6 +35,13 @@ public class XTimePartitionFunction<T ,P extends TimePartitionParam<P>> implemen
      */
     private final Function<P ,List<T>> queryFunction;
 
+    /**
+     * true:升序加载
+     * false:降序加载
+     */
+    private final boolean asc;
+
+
     public XTimePartitionFunction(P sourceParam,
                                   boolean asc,
                                   int partitionSize,
@@ -51,8 +52,8 @@ public class XTimePartitionFunction<T ,P extends TimePartitionParam<P>> implemen
                 || partitionSize < 1 || intervalUnit == null || queryFunction == null) {
             throw new IllegalArgumentException();
         }
-        this.sourceParam = sourceParam;
         this.asc = asc;
+        this.sourceParam = sourceParam;
         this.partitionSize = partitionSize;
         this.intervalUnit = intervalUnit;
         this.queryFunction = queryFunction;
@@ -101,15 +102,6 @@ public class XTimePartitionFunction<T ,P extends TimePartitionParam<P>> implemen
         return sourceParam.$partitionParam(partitionStartTime ,partitionEndTime);
     }
 
-    private final LocalDateTime getFullStartTime(){
-        return sourceParam.$readStartTime();
-    }
-
-
-    private final LocalDateTime getFullEndTime(){
-        return sourceParam.$readEndTime();
-    }
-
     private P nextParam(P param0)
     {
         if (!hasNextPartition(param0)){
@@ -134,9 +126,9 @@ public class XTimePartitionFunction<T ,P extends TimePartitionParam<P>> implemen
 
     private boolean hasNextPartition(P param0){
         if (asc){
-            return param0.$readEndTime().isBefore(getFullEndTime());
+            return param0.$readEndTime().isBefore(sourceParam.$readEndTime());
         }else {
-            return param0.$readStartTime().isAfter(getFullStartTime());
+            return param0.$readStartTime().isAfter(sourceParam.$readStartTime());
         }
     }
 
