@@ -32,7 +32,7 @@ public interface DatePartitionParam<CHILD extends DatePartitionParam<CHILD>> ext
 
     @Override
     default LocalDateTime $readStartTime(){
-        return $readEndDate().atTime(LocalTime.MIN);
+        return $readStartDate().atTime(LocalTime.MIN);
     }
 
     @Override
