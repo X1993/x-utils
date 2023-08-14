@@ -20,7 +20,7 @@ public class XTimePartitionFunctionTest {
 
     @Data
     @Accessors(chain = true)
-    class Param implements TimePartitionParam<Param>{
+    class TimeParam implements TimePartitionParam<TimeParam>{
 
         private LocalDateTime startTime;
 
@@ -37,36 +37,89 @@ public class XTimePartitionFunctionTest {
         }
 
         @Override
-        public Param $partitionParam(LocalDateTime partitionStartTime, LocalDateTime partitionEndTime) {
-            return new Param().setStartTime(partitionStartTime).setEndTime(partitionEndTime);
+        public TimeParam $partitionParam(LocalDateTime partitionStartTime, LocalDateTime partitionEndTime) {
+            return new TimeParam().setStartTime(partitionStartTime).setEndTime(partitionEndTime);
         }
-
     }
 
     @Test
-    public void test(){
+    public void testTimePartitionFunction(){
         LocalDateTime startTime = LocalDate.of(2023 ,1,1).atTime(LocalTime.MIN);
         LocalDateTime endTime = LocalDate.of(2023 ,1,10).atTime(LocalTime.MIN);
 
-        XTimePartitionFunction<Void ,Param> partitionFunction = new XTimePartitionFunction<>(
-                new Param().setStartTime(startTime).setEndTime(endTime) ,true ,
+        XTimePartitionFunction<Void , TimeParam> partitionFunction = new XTimePartitionFunction<>(
+                new TimeParam().setStartTime(startTime).setEndTime(endTime) ,true ,
                 1 ,ChronoUnit.DAYS ,p -> {
                     System.out.println(p);
                     return Collections.EMPTY_LIST;
         });
 
 
-        XPartitionFunction.Input<Void, Param> input = new XPartitionFunction.Input<Void, Param>()
+        XPartitionFunction.Input<Void, TimeParam> input = new XPartitionFunction.Input<Void, TimeParam>()
                 .setCurrentParam(partitionFunction.firstInputParam());
         while (true){
-            XPartitionFunction.Output<Void, Param> output = partitionFunction.select(input);
+            XPartitionFunction.Output<Void, TimeParam> output = partitionFunction.select(input);
             if (!output.isHasNext()){
                 break;
             }
-            XPartitionFunction.Input<Void, Param> nextInput = new XPartitionFunction.Input<Void, Param>()
+            XPartitionFunction.Input<Void, TimeParam> nextInput = new XPartitionFunction.Input<Void, TimeParam>()
                     .setCurrentParam(output.getNextParam());
             Assert.assertEquals(input.getCurrentParam().getEndTime() ,
                     nextInput.getCurrentParam().getStartTime());
+            input = nextInput;
+        }
+    }
+
+
+    @Data
+    @Accessors(chain = true)
+    class DateParam implements DatePartitionParam<DateParam>{
+
+        private LocalDate startDate;
+
+        private LocalDate endDate;
+
+        @Override
+        public LocalDate $readStartDate() {
+            return startDate;
+        }
+
+        @Override
+        public LocalDate $readEndDate() {
+            return endDate;
+        }
+
+        @Override
+        public DateParam $partitionParam(LocalDate partitionStartDate, LocalDate partitionEndDate) {
+            return new DateParam().setStartDate(partitionStartDate).setEndDate(partitionEndDate);
+        }
+
+    }
+
+    @Test
+    public void testDatePartitionFunction(){
+        LocalDate startDate = LocalDate.of(2023 ,1,1);
+        LocalDate endDate = LocalDate.of(2023 ,1,10);
+
+        XTimePartitionFunction<Void , DateParam> partitionFunction = new XTimePartitionFunction<>(
+                new DateParam().setStartDate(startDate).setEndDate(endDate) ,true ,
+                1 ,ChronoUnit.DAYS ,p -> {
+            System.out.println(p);
+            return Collections.EMPTY_LIST;
+        });
+
+
+        XPartitionFunction.Input<Void, DateParam> input = new XPartitionFunction.Input<Void, DateParam>()
+                .setCurrentParam(partitionFunction.firstInputParam());
+        while (true){
+            XPartitionFunction.Output<Void, DateParam> output = partitionFunction.select(input);
+            if (!output.isHasNext()){
+                break;
+            }
+            XPartitionFunction.Input<Void, DateParam> nextInput = new XPartitionFunction.Input<Void, DateParam>()
+                    .setCurrentParam(output.getNextParam());
+            Assert.assertEquals(input.getCurrentParam().getEndDate() ,
+                    nextInput.getCurrentParam().getStartDate());
             input = nextInput;
         }
     }

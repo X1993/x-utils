@@ -3,7 +3,6 @@ package com.github.util.structure.iterator.partition.time;
 import com.github.util.structure.iterator.partition.XPartitionFunction;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalUnit;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
@@ -67,11 +66,9 @@ public class XTimePartitionFunction<T ,P extends TimePartitionParam<P>> implemen
             throw new IllegalStateException();
         }
 
-        if (currentParam.$readStartTime().compareTo(currentParam.$readEndTime()) >= 0)
+        if (currentParam.$readStartTime().isAfter(currentParam.$readEndTime()))
         {
-            return new XPartitionFunction.Output<T ,P>()
-                    .setPartition(Collections.EMPTY_LIST)
-                    .setHasNext(false);
+            throw new IllegalStateException("分片开始时间不能大于结束时间");
         }
 
         List<T> resultList = queryFunction.apply(currentParam);
@@ -79,7 +76,7 @@ public class XTimePartitionFunction<T ,P extends TimePartitionParam<P>> implemen
 
         return new XPartitionFunction.Output<T ,P>()
                 .setPartition(resultList)
-                .setHasNext(nextPartitionParam != null)
+                .setHasNext(hasNextPartition(currentParam))
                 .setNextParam(nextPartitionParam);
     }
 
