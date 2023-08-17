@@ -87,13 +87,17 @@ public abstract class XFixedRatePartitionFunction<T ,V ,P extends XFixedRatePart
             throw new IllegalStateException("分片开始时间不能大于结束时间");
         }
 
-        List<T> resultList = queryFunction.apply(currentParam);
-        P nextPartitionParam = nextParam(currentParam);
+        //复制一下避免查询的时候修改了原参数影响后续参数的创建
+        P inputParam = currentParam.copy();
+        if (inputParam == null){
+            throw new IllegalStateException("copy实现异常");
+        }
+        List<T> resultList = queryFunction.apply(inputParam);
 
         return new XPartitionFunction.Output<T ,P>()
                 .setPartition(resultList)
                 .setHasNext(hasNextPartition(currentParam))
-                .setNextParam(nextPartitionParam);
+                .setNextParam(nextParam(currentParam));
     }
 
     @Override

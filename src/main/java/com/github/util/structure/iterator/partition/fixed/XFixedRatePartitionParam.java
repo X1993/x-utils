@@ -27,4 +27,12 @@ public interface XFixedRatePartitionParam<V ,CHILD extends XFixedRatePartitionPa
      */
     CHILD $partitionParam(V partitionStartV, V partitionEndV);
 
+    /**
+     * 复制
+     * @return
+     */
+    default CHILD copy(){
+        return $partitionParam($readStartTime() ,$readEndTime());
+    }
+
 }
