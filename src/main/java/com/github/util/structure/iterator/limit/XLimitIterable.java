@@ -11,19 +11,21 @@ import java.util.Iterator;
  */
 public class XLimitIterable<T> implements XIterable<T> {
 
-    private XLimitIterator<T> iterator;
+    private final Iterable<T> iterable;
+
+    private final int limit;
 
     public XLimitIterable(Iterable<T> iterable ,int limit){
-        this.iterator = new XLimitIterator<>(iterable.iterator() ,limit);
-    }
-
-    public XLimitIterable(Iterator<T> iterator ,int limit){
-        this.iterator = new XLimitIterator<>(iterator ,limit);
+        if (iterable == null){
+            throw new NullPointerException();
+        }
+        this.iterable = iterable;
+        this.limit = limit;
     }
 
     @Override
     public Iterator<T> iterator() {
-        return iterator;
+        return new XLimitIterator<>(iterable.iterator() ,limit);
     }
 
 }
