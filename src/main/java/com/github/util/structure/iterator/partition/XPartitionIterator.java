@@ -14,7 +14,7 @@ import java.util.Objects;
  */
 public class XPartitionIterator<T ,P> implements XIterator<T> {
 
-    private Iterator<T> partitionIterator = Collections.EMPTY_LIST.iterator();
+    private Iterator<T> partitionIterator;
 
     private final XPartitionFunction<T ,P> partitionFunction;
 
@@ -25,6 +25,10 @@ public class XPartitionIterator<T ,P> implements XIterator<T> {
     public XPartitionIterator(XPartitionFunction<T ,P> partitionFunction) {
         Objects.requireNonNull(partitionFunction);
         this.partitionFunction = partitionFunction;
+        //加载第一个分区
+        this.preOutput = partitionFunction.selectFirst();
+        List<T> partition = this.preOutput.getPartition();
+        this.partitionIterator = (partition != null ? partition : Collections.EMPTY_LIST).iterator();
     }
 
     @Override
@@ -39,28 +43,20 @@ public class XPartitionIterator<T ,P> implements XIterator<T> {
                 return false;
             }
 
-            XPartitionFunction.Output<T ,P> output;
-            if (preOutput == null){
-                //第一个分区
-                output = partitionFunction.selectFirst();
-            }else {
-                //加载下一个分区
-                output = partitionFunction.select(new XPartitionFunction.Input<T ,P>()
-                        .setCurrentParam(preOutput.getNextParam())
-                        .setPrePartition(preOutput.getPartition()));
+            if (!preOutput.isHasNext()) {
+                finished = true;
+                return false;
             }
+
+            //加载下一个分区
+            XPartitionFunction.Output<T ,P> output = partitionFunction.select(new XPartitionFunction.Input<T ,P>()
+                    .setCurrentParam(preOutput.getNextParam())
+                    .setPrePartition(preOutput.getPartition()));
 
             if (output == null){
                 throw new IllegalStateException("分区加载函数返回值不允许为null");
             }
             preOutput = output;
-
-            if (!output.isHasNext())
-            {
-                partitionIterator = Collections.EMPTY_LIST.iterator();
-                finished = true;
-                return false;
-            }
 
             List<T> partition = preOutput.getPartition();
             partitionIterator = (partition != null ? partition : Collections.EMPTY_LIST).iterator();
