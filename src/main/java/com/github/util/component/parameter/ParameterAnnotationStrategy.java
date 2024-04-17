@@ -1,4 +1,4 @@
-package com.github.util.parameter;
+package com.github.util.component.parameter;
 
 import java.lang.annotation.Annotation;
 

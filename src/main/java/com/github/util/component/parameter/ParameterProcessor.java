@@ -1,4 +1,4 @@
-package com.github.util.parameter;
+package com.github.util.component.parameter;
 
 import com.github.util.reflect.TypeUtils;
 import lombok.extern.slf4j.Slf4j;
