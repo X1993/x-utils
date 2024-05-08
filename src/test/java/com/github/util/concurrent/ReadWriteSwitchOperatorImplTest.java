@@ -90,7 +90,7 @@ public class ReadWriteSwitchOperatorImplTest {
     /**
      * 模拟redis，用redis实现PointKeyOperator和LockOperator
      */
-    static class RedisMock extends ConcurrentHashMap<String ,String> implements PointerKeyOperator,LockOperator{
+    static class RedisMock extends ConcurrentHashMap<String ,String> implements PointerKeyOperator ,LockOperator{
 
         @Override
         public Integer getOffset(String pointerKey) {
