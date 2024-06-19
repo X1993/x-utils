@@ -1,5 +1,6 @@
 package com.github.util.reflect;
 
+import com.github.util.lamdba.LambdaUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import java.util.HashSet;
@@ -59,7 +60,7 @@ public class LambdaUtilsTest {
             }
         };
 
-        Function<Integer, Integer> cacheFunction = LambdaUtils.cacheFunction(function);
+        Function<Integer, Integer> cacheFunction = LambdaUtils.cache(function);
 
         cacheFunction.apply(1);
         cacheFunction.apply(1);

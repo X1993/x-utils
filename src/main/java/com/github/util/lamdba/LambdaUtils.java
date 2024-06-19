@@ -1,4 +1,4 @@
-package com.github.util.reflect;
+package com.github.util.lamdba;
 
 import java.io.Serializable;
 import java.lang.invoke.SerializedLambda;
@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author X1993
@@ -77,28 +78,49 @@ public class LambdaUtils {
     }
 
     /**
-     * 带缓存的Function函数
+     * 指定缓存的Function函数
      * @param function
      * @param cacheMap 缓存容器
      * @param <T>
      * @param <R>
      * @return
      */
-    public static <T ,R> Function<T ,R> cacheFunction(Function<T ,R> function ,Map<T ,R> cacheMap)
+    public static <T ,R> XFunction<T ,R> cache(Function<T ,R> function ,Map<T ,R> cacheMap)
     {
         return t -> cacheMap.computeIfAbsent(t ,key -> function.apply(key));
     }
 
     /**
-     * 带缓存的Function函数
+     * 带缓存的{@link Function}
      * @param function
      * @param <T>
      * @param <R>
      * @return
      */
-    public static <T ,R> Function<T ,R> cacheFunction(Function<T ,R> function)
+    public static <T ,R> XFunction<T ,R> cache(Function<T ,R> function)
     {
-        return cacheFunction(function ,new HashMap<>());
+        return cache(function ,new HashMap<>());
+    }
+
+    /**
+     * 带缓存的{@link Supplier}
+     * @param supplier
+     * @param <T>
+     * @return
+     */
+    public static <T> XSupplier<T> cache(Supplier<T> supplier){
+        return new XSupplier<T>() {
+
+            private T cacheResult;
+
+            @Override
+            public T get() {
+                if (cacheResult != null){
+                    return cacheResult;
+                }
+                return cacheResult = supplier.get();
+            }
+        };
     }
 
 }
