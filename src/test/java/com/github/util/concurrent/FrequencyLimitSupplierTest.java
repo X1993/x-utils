@@ -3,6 +3,7 @@ package com.github.util.concurrent;
 import org.junit.Test;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * @author wangjj7
@@ -12,15 +13,23 @@ import java.time.LocalDateTime;
 public class FrequencyLimitSupplierTest {
 
     @Test
-    public void test(){
+    public void test() throws InterruptedException {
         FrequencyLimitSupplier frequencyLimitSupplier = new FrequencyLimitSupplier(
-                1000 ,5000 , p -> {
-            System.out.println(p);
+                100 ,1000 , p -> {
+            System.out.println(LocalDateTime.now() + " ,thread:" + Thread.currentThread());
             return p;
         });
+        CountDownLatch latch = new CountDownLatch(9);
         for (int i = 0; i < 3; i++) {
-            frequencyLimitSupplier.apply(LocalDateTime.now() + "," + i);
+            new Thread(() -> {
+                for (int j = 0; j < 3; j++){
+                    frequencyLimitSupplier.apply("");
+                    latch.countDown();
+                }
+            }).start();
         }
+
+        latch.await();
     }
 
 }

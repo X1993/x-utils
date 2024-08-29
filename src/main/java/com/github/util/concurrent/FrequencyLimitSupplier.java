@@ -38,15 +38,16 @@ public class FrequencyLimitSupplier<P ,T> implements Function<P ,T> {
         while (true){
             long currentTimeMillis = System.currentTimeMillis();
             long totalIntervalMS = currentTimeMillis - startTimestamp;
+            if (totalIntervalMS >= timeoutMS){
+                throw new CallFrequencyExceedingException("call frequency exceeding limit");
+            }
             long beforeTimestamp = beforeTimestampAtomic.get();
             long intervalMS = Math.max(currentTimeMillis - beforeTimestamp ,0);
-            if (beforeTimestamp > 0 && intervalMS >= minIntervalMS){
+            if (intervalMS >= minIntervalMS){
                 if (beforeTimestampAtomic.compareAndSet(beforeTimestamp, currentTimeMillis)) {
                     return function.apply(p);
-                }else {
-                    beforeTimestamp = beforeTimestampAtomic.get();
-                    intervalMS = Math.max(currentTimeMillis - beforeTimestamp ,0);
                 }
+                continue;
             }
             long waitMS = minIntervalMS - intervalMS;
             if (totalIntervalMS + waitMS >= timeoutMS){
