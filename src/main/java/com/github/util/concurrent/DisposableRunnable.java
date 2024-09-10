@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @date 2023/5/5
  * @description
  */
-public class XRunnable<T> implements Runnable{
+public class DisposableRunnable<T> implements Runnable{
 
     private final Runnable target;
 
@@ -19,7 +19,7 @@ public class XRunnable<T> implements Runnable{
     //已启动信号
     private final AtomicBoolean startedSignal = new AtomicBoolean(false);
 
-    public XRunnable(Runnable originalTask) {
+    public DisposableRunnable(Runnable originalTask) {
         this.target = () -> {
             try {
                 originalTask.run();
@@ -30,7 +30,7 @@ public class XRunnable<T> implements Runnable{
         };
     }
 
-    public XRunnable(Callable<T> originalTask) {
+    public DisposableRunnable(Callable<T> originalTask) {
         this.target = () -> {
             try {
                 completableFuture.complete(originalTask.call());
@@ -43,7 +43,7 @@ public class XRunnable<T> implements Runnable{
     @Override
     public void run() {
         if (startedSignal.compareAndSet(false ,true)){
-            target.run();
+            target.run();//确保每个任务只会执行一次
         }
     }
 
