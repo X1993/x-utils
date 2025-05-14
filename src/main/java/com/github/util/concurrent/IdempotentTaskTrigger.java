@@ -2,9 +2,9 @@ package com.github.util.concurrent;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.io.Serializable;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -26,53 +26,60 @@ import java.util.concurrent.atomic.AtomicReference;
 public class IdempotentTaskTrigger implements Runnable{
 
     /**
+     * 任务id
+     * 分布式场景下需要用到这个taskId
+     */
+    private final String taskId;
+
+    /**
      * 需要执行的任务（支持幂等性）
      */
     private final Runnable task;
+
+    /**
+     * 超时时间，单位毫秒，如果 <= 0，则表示不超时
+     */
+    private long timeout;
 
     /**
      * 状态管理器
      */
     private final StateManager stateManager;
 
-    public IdempotentTaskTrigger(Runnable task ,StateManager signManager) {
+    public IdempotentTaskTrigger(String taskId ,Runnable task ,
+                                 long timeout ,StateManager signManager) {
+
+        Objects.requireNonNull(taskId);
         Objects.requireNonNull(task);
         Objects.requireNonNull(signManager);
+        this.taskId = taskId;
         this.task = task;
+        this.timeout = timeout;
         this.stateManager = signManager;
     }
 
     public IdempotentTaskTrigger(Runnable task)
     {
-        this(task ,new LocalStateManager());
+        this(UUID.randomUUID().toString() ,task ,-1 ,new LocalStateManager());
     }
 
     @Override
     public void run()
     {
+        String holder = taskId;
         while (true){
-            if (stateManager.tryOccupy()) {
-                //可以合并执行
-                stateManager.resetRefresh();
+            if (stateManager.tryOccupy(holder ,timeout)) {
                 try {
                     task.run();
                 }finally {
-                    if (!stateManager.isRefresh()) {
-                        if (!stateManager.release()) {
-                            //不应该执行到这里，有bug！🤦‍
-                            throw new IllegalStateException();
-                        }
-                        if (!stateManager.isRefresh()) {
-                            //确保在解除占用标记的过程中没有新的执行请求
-                            return;
-                        }
+                    if (stateManager.release(holder)){
+                        return;
                     }
-                    //任务执行过程中有收到新的执行请求，重新执行一次
                 }
             }else {
                 //抢占失败，通知当前任务执行线程
                 stateManager.refresh();
-                if (stateManager.isExclusive()){
+                if (stateManager.currentHolder() != null){
                     //确保执行中的线程能收到通知
                     return;
                 }
@@ -87,45 +94,44 @@ public class IdempotentTaskTrigger implements Runnable{
     public interface StateManager {
 
         /**
-         * 尝试设置独占状态，可重入
+         * 尝试设置独占状态
+         * @param holder 占用者
+         * @param timeout 超时时间，单位毫秒，如果 <= 0，则表示不超时
          * @return
          */
-        boolean tryOccupy();
+        boolean tryOccupy(String holder ,long timeout);
+
+        default boolean tryOccupy(String holder)
+        {
+            return tryOccupy(holder ,-1);
+        }
 
         /**
          * 解除独占状态
          */
-        boolean release();
+        boolean release(String holder);
 
         /**
          * 是否存在独占状态
          * @return
          */
-        boolean isExclusive();
+        String currentHolder();
 
         /**
-         * 刷新次数加一
+         * 刷新状态
          */
-        int refresh();
+        boolean refresh();
 
         /**
-         * 重置刷新次数
+         * 重置刷新
          */
-        void resetRefresh();
-
-        /**
-         * 获取刷新次数
-         * @return
-         */
-        int refreshCount();
+        boolean resetRefresh(String holder);
 
         /**
          * 是否有刷新
          * @return
          */
-        default boolean isRefresh(){
-            return refreshCount() > 0;
-        }
+        boolean isRefresh();
 
     }
 
@@ -139,92 +145,100 @@ public class IdempotentTaskTrigger implements Runnable{
          */
         private final AtomicReference<ExclusiveContent> exclusiveState = new AtomicReference();
 
-        /**
-         * 刷新标记
-         */
-        private final AtomicInteger refreshCount = new AtomicInteger();
-
         @Override
-        public boolean tryOccupy()
+        public boolean tryOccupy(String holder ,long timeout)
         {
-            Thread thread = Thread.currentThread();
             while (true) {
+                long expireTimestamp = timeout <= 0 ? Long.MAX_VALUE : System.currentTimeMillis() + timeout;
                 ExclusiveContent exclusiveContent = exclusiveState.get();
                 if (exclusiveContent != null) {
-                    if (exclusiveContent.getThread() == thread) {
-                        //重入
-                        if (exclusiveState.compareAndSet(exclusiveContent,
-                                new ExclusiveContent(thread, exclusiveContent.reentriesCount + 1))){
+                    if (exclusiveContent.getHolder().equals(holder)){
+                        if (exclusiveState.compareAndSet(exclusiveContent ,new ExclusiveContent(holder ,false ,expireTimestamp))){
                             return true;
+                        }else {
+                            continue;
                         }
-                    } else {
-                        //被占用
+                    }else {
                         return false;
                     }
                 } else {
                     //尝试占用
-                    if (exclusiveState.compareAndSet(null ,new ExclusiveContent(thread ,1))){
+                    if (exclusiveState.compareAndSet(null ,new ExclusiveContent(holder ,false ,expireTimestamp))){
                         return true;
+                    }else {
+                        continue;
                     }
                 }
             }
         }
 
         @Override
-        public boolean release()
+        public boolean release(String holder)
         {
             while (true) {
                 ExclusiveContent exclusiveContent = exclusiveState.get();
-                if (exclusiveContent == null) {
+                if (exclusiveContent == null || !holder.equals(exclusiveContent.getHolder())) {
                     return true;
                 }
-                Thread occupyThread = exclusiveContent.getThread();
-                Thread currentThread = Thread.currentThread();
-                if (currentThread != occupyThread) {
+                if (exclusiveContent.isRefresh()){
+                    //需要再执行一次
                     return false;
                 }
-                int reentriesCount = exclusiveContent.getReentriesCount();
-                if (reentriesCount > 1) {
-                    if (exclusiveState.compareAndSet(exclusiveContent,
-                            new ExclusiveContent(currentThread, reentriesCount - 1))){
-                        return true;
-                    }
-                } else {
-                    if (exclusiveState.compareAndSet(exclusiveContent, null)){
-                        return true;
-                    }
+                if (exclusiveState.compareAndSet(exclusiveContent, null)){
+                    return true;
                 }
             }
         }
 
         @Override
-        public boolean isExclusive() {
-            return exclusiveState.get() != null;
+        public String currentHolder() {
+            ExclusiveContent exclusiveContent = exclusiveState.get();
+            return exclusiveContent != null ? exclusiveContent.getHolder() : null;
         }
 
         @Override
-        public int refresh() {
-            return refreshCount.incrementAndGet();
+        public boolean refresh() {
+            while (true) {
+                ExclusiveContent exclusiveContent = exclusiveState.get();
+                if (exclusiveContent == null){
+                    return false;
+                }
+                if (exclusiveContent.refresh || exclusiveState.compareAndSet(exclusiveContent ,
+                        new ExclusiveContent(exclusiveContent.getHolder(), true ,exclusiveContent.expireTimestamp))){
+                    return true;
+                }
+            }
         }
 
         @Override
-        public void resetRefresh() {
-            refreshCount.set(0);
+        public boolean resetRefresh(String holder) {
+            while (true) {
+                ExclusiveContent exclusiveContent = exclusiveState.get();
+                if (exclusiveContent == null){
+                    return false;
+                }
+                if (!exclusiveContent.refresh || exclusiveState.compareAndSet(exclusiveContent ,
+                        new ExclusiveContent(exclusiveContent.getHolder(), false ,exclusiveContent.expireTimestamp))){
+                    return true;
+                }
+            }
         }
 
         @Override
-        public int refreshCount() {
-            return refreshCount.get();
+        public boolean isRefresh() {
+            ExclusiveContent exclusiveContent = exclusiveState.get();
+            return exclusiveContent != null ? exclusiveContent.refresh : false;
         }
 
-        @NoArgsConstructor
         @AllArgsConstructor
         @Data
-        private class ExclusiveContent{
+        private class ExclusiveContent implements Serializable {
 
-            private Thread thread;
+            private final String holder;
 
-            private int reentriesCount;
+            private final boolean refresh;
+
+            private final long expireTimestamp;
 
         }
 

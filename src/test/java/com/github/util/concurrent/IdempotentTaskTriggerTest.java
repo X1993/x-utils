@@ -30,7 +30,7 @@ public class IdempotentTaskTriggerTest {
         }
 
         Thread.sleep(3 * sleepMs);
-        Assert.assertTrue(counter.get() == 2);
+        Assert.assertEquals(counter.get() ,2);
     }
 
     IdempotentTaskTrigger idempotentTask = new IdempotentTaskTrigger(new Runnable() {
