@@ -620,6 +620,12 @@ public class TypeUtils {
         if (typeName == null || typeName.length() == 0){
             throw new IllegalArgumentException();
         }
+
+        Class<?> basicType = tryParseBasicType(typeName);
+        if (basicType != null){
+            return basicType;
+        }
+
         int arrayDimension = 0;
         int i = typeName.length() - 1;
         while (true) {
@@ -671,6 +677,26 @@ public class TypeUtils {
             return Class.forName(className.toString() ,false ,classLoader);
         } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException(e);
+        }
+    }
+
+    /**
+     * 尝试解析基本类型
+     * @param typeName
+     * @return
+     */
+    public static Class<?> tryParseBasicType(String typeName) {
+        switch (typeName) {
+            case "int":     return int.class;
+            case "long":    return long.class;
+            case "boolean": return boolean.class;
+            case "double":  return double.class;
+            case "float":   return float.class;
+            case "char":    return char.class;
+            case "byte":    return byte.class;
+            case "short":   return short.class;
+            case "void":    return void.class;
+            default:        return null;
         }
     }
 
