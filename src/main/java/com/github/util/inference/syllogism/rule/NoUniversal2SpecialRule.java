@@ -8,7 +8,7 @@ import com.github.util.inference.syllogism.StandardOutspokenSyllogism;
  * @date 2025/11/12
  * @description
  */
-public class NoUniversal2SpecialRule implements SyllogismValidRule{
+public class NoUniversal2SpecialRule implements SyllogismValidateRule {
 
     @Override
     public String content() {

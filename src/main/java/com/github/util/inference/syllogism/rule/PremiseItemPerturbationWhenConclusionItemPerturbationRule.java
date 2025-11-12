@@ -9,7 +9,7 @@ import com.github.util.inference.syllogism.StandardOutspokenSyllogism;
  * @date 2025/11/12
  * @description
  */
-public class PremiseItemPerturbationWhenConclusionItemPerturbationRule implements SyllogismValidRule{
+public class PremiseItemPerturbationWhenConclusionItemPerturbationRule implements SyllogismValidateRule {
 
     @Override
     public String content() {

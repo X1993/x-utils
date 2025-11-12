@@ -8,7 +8,7 @@ import com.github.util.inference.syllogism.StandardOutspokenSyllogism;
  * @date 2025/11/12
  * @description
  */
-public class NegativePremiseWhenNegativeConclusionRule implements SyllogismValidRule{
+public class NegativePremiseWhenNegativeConclusionRule implements SyllogismValidateRule {
 
     @Override
     public String content() {

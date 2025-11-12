@@ -11,20 +11,20 @@ import java.util.List;
  */
 public class SyllogismValidator {
 
-    private final List<SyllogismValidRule> syllogismValidRules = new ArrayList<>();
+    private final List<SyllogismValidateRule> syllogismValidateRules = new ArrayList<>();
 
     public SyllogismValidator()
     {
-        syllogismValidRules.add(new HaveMediumItemPerturbationRule());
-        syllogismValidRules.add(new PremiseItemPerturbationWhenConclusionItemPerturbationRule());
-        syllogismValidRules.add(new NotHaveTwoNegativePremiseRule());
-        syllogismValidRules.add(new NegativePremiseWhenNegativeConclusionRule());
-        syllogismValidRules.add(new NoUniversal2SpecialRule());
+        syllogismValidateRules.add(new HaveMediumItemPerturbationRule());
+        syllogismValidateRules.add(new PremiseItemPerturbationWhenConclusionItemPerturbationRule());
+        syllogismValidateRules.add(new NotHaveTwoNegativePremiseRule());
+        syllogismValidateRules.add(new NegativePremiseWhenNegativeConclusionRule());
+        syllogismValidateRules.add(new NoUniversal2SpecialRule());
     }
 
     public boolean validate(StandardOutspokenSyllogism standardOutspokenSyllogism){
         boolean result = true;
-        for (SyllogismValidRule rule : syllogismValidRules) {
+        for (SyllogismValidateRule rule : syllogismValidateRules) {
             boolean ruleResult = rule.validate(standardOutspokenSyllogism);
             result &= ruleResult;
             if (!ruleResult){
