@@ -73,4 +73,19 @@ public class SyllogismValidatorTest {
         System.out.println(syllogismValidator.validate(syllogism) ? "有效" : "无效");
     }
 
+    @Test
+    public void demo1(){
+        OutspokenProposition majorPremise = new OutspokenProposition(PropositionConstant.Type.A ,
+                "黑妞" ,"狗");
+        OutspokenProposition minorPremise = new OutspokenProposition(PropositionConstant.Type.A ,
+                "狗" ,"动物");
+        OutspokenProposition conclusion = new OutspokenProposition(PropositionConstant.Type.A ,
+                "黑妞" ,"动物");
+
+        StandardOutspokenSyllogism syllogism = StandardOutspokenSyllogism.create(majorPremise, minorPremise, conclusion);
+        System.out.println(syllogism.standardDescription());
+
+        System.out.println(syllogismValidator.validate(syllogism) ? "有效" : "无效");
+    }
+
 }

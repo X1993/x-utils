@@ -31,9 +31,6 @@ public class SyllogismValidator {
                 System.out.println(rule.content());
             }
         }
-        if (result){
-            System.out.println("有效");
-        }
         return result;
     }
 
