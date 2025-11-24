@@ -1,11 +1,11 @@
-package com.github.util.inference.syllogism;
+package com.github.util.inference.syllogism.entity;
 
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import static com.github.util.inference.syllogism.SyllogismConstant.Item.*;
+import static com.github.util.inference.syllogism.entity.SyllogismConstant.Item.*;
 
 /**
  * 标准直言三段论

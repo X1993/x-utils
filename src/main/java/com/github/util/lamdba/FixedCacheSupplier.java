@@ -1,6 +1,8 @@
 package com.github.util.lamdba;
 
 import lombok.Data;
+
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -27,6 +29,10 @@ public class FixedCacheSupplier<V> implements Supplier<V> {
         }
         this.expireMS = expireMS;
         this.valueQuery = valueQuery;
+    }
+
+    public FixedCacheSupplier(int expireTime ,TimeUnit timeUnit ,Supplier<V> valueQuery) {
+        this(timeUnit.toMillis(expireTime) ,valueQuery);
     }
 
     @Override

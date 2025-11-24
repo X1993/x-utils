@@ -1,6 +1,6 @@
 package com.github.util.inference.syllogism.rule;
 
-import com.github.util.inference.syllogism.StandardOutspokenSyllogism;
+import com.github.util.inference.syllogism.entity.StandardOutspokenSyllogism;
 
 /**
  * 结论是否定命题则前提中有且仅有一个否定命题

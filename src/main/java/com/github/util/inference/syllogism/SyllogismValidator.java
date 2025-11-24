@@ -1,5 +1,7 @@
 package com.github.util.inference.syllogism;
 
+import com.github.util.inference.syllogism.entity.OutspokenProposition;
+import com.github.util.inference.syllogism.entity.StandardOutspokenSyllogism;
 import com.github.util.inference.syllogism.rule.*;
 import java.util.ArrayList;
 import java.util.List;

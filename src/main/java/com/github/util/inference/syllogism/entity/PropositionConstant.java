@@ -1,4 +1,4 @@
-package com.github.util.inference.syllogism;
+package com.github.util.inference.syllogism.entity;
 
 /**
  * 命题定义
@@ -15,30 +15,31 @@ public interface PropositionConstant {
     {
         A("全称肯定命题" ,true ,true ,true ,false){
             @Override
-            String description(String premiseItem, String predicateItem) {
+            public String description(String premiseItem, String predicateItem) {
                 return "所有" + premiseItem + "都是" + predicateItem;
             }
         },
         E("全称否定命题" ,true ,false ,true ,true){
             @Override
-            String description(String premiseItem, String predicateItem) {
+            public String description(String premiseItem, String predicateItem) {
                 return "没有" + premiseItem + "是" + predicateItem;
             }
         },
         I("特称肯定命题" ,false ,true ,false ,false) {
             @Override
-            String description(String premiseItem, String predicateItem) {
+            public String description(String premiseItem, String predicateItem) {
                 return "有" + predicateItem + "是" + premiseItem;
             }
         },
         O("特称否定命题" ,false ,false ,false ,true) {
             @Override
-            String description(String premiseItem, String predicateItem) {
+            public String description(String premiseItem, String predicateItem) {
                 return "有" + predicateItem + "不是" + premiseItem;
             }
         },
         ;
 
+        //命题类型
         private final String typeName;
 
         //命题的量是否是全称（或特称）
@@ -67,7 +68,7 @@ public interface PropositionConstant {
          * @param predicateItem 谓项
          * @return
          */
-        abstract String description(String premiseItem , String predicateItem);
+        public abstract String description(String premiseItem , String predicateItem);
 
         public String getTypeName(){
             return typeName;

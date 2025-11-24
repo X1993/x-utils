@@ -1,7 +1,7 @@
 package com.github.util.inference.syllogism.rule;
 
-import com.github.util.inference.syllogism.OutspokenProposition;
-import com.github.util.inference.syllogism.StandardOutspokenSyllogism;
+import com.github.util.inference.syllogism.entity.OutspokenProposition;
+import com.github.util.inference.syllogism.entity.StandardOutspokenSyllogism;
 
 /**
  * 结论中周延的项在前提中也必须周延

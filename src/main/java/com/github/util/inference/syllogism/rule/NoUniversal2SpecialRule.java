@@ -1,6 +1,6 @@
 package com.github.util.inference.syllogism.rule;
 
-import com.github.util.inference.syllogism.StandardOutspokenSyllogism;
+import com.github.util.inference.syllogism.entity.StandardOutspokenSyllogism;
 
 /**
  * 结论是特称命题前提不能都是全称命题（只适用布尔解释）

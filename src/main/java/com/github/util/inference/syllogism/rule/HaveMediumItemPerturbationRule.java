@@ -1,6 +1,6 @@
 package com.github.util.inference.syllogism.rule;
 
-import com.github.util.inference.syllogism.StandardOutspokenSyllogism;
+import com.github.util.inference.syllogism.entity.StandardOutspokenSyllogism;
 
 /**
  * 标准直言三段论中项在前提中至少有一个周延

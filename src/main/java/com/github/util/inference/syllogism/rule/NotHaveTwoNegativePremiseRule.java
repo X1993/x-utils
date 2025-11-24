@@ -1,6 +1,6 @@
 package com.github.util.inference.syllogism.rule;
 
-import com.github.util.inference.syllogism.StandardOutspokenSyllogism;
+import com.github.util.inference.syllogism.entity.StandardOutspokenSyllogism;
 
 /**
  * 两个前提不可以都是否定命题

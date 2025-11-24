@@ -1,4 +1,4 @@
-package com.github.util.inference.syllogism;
+package com.github.util.inference.syllogism.entity;
 
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;

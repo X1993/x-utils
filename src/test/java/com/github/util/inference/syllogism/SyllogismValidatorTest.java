@@ -1,5 +1,9 @@
 package com.github.util.inference.syllogism;
 
+import com.github.util.inference.syllogism.entity.OutspokenProposition;
+import com.github.util.inference.syllogism.entity.PropositionConstant;
+import com.github.util.inference.syllogism.entity.StandardOutspokenSyllogism;
+import com.github.util.inference.syllogism.entity.SyllogismConstant;
 import org.junit.Test;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,7 +17,7 @@ import java.util.Map;
  */
 public class SyllogismValidatorTest {
 
-    SyllogismValidator syllogismValidator = new SyllogismValidator();
+    final SyllogismValidator syllogismValidator = new SyllogismValidator();
 
     @Test
     public void printAllValidSyllogism()
@@ -75,12 +79,9 @@ public class SyllogismValidatorTest {
 
     @Test
     public void demo1(){
-        OutspokenProposition majorPremise = new OutspokenProposition(PropositionConstant.Type.A ,
-                "黑妞" ,"狗");
-        OutspokenProposition minorPremise = new OutspokenProposition(PropositionConstant.Type.A ,
-                "狗" ,"动物");
-        OutspokenProposition conclusion = new OutspokenProposition(PropositionConstant.Type.A ,
-                "黑妞" ,"动物");
+        OutspokenProposition majorPremise = OutspokenPropositionBuilder.all("黑妞").is("狗");
+        OutspokenProposition minorPremise = OutspokenPropositionBuilder.all("狗").is("动物");
+        OutspokenProposition conclusion = OutspokenPropositionBuilder.all("黑妞").is("动物");
 
         StandardOutspokenSyllogism syllogism = StandardOutspokenSyllogism.create(majorPremise, minorPremise, conclusion);
         System.out.println(syllogism.standardDescription());
