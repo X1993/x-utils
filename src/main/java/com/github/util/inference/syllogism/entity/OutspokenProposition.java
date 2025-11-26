@@ -4,7 +4,7 @@ import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * 直言命题
+ * 标准直言命题
  * @author wangjj7
  * @date 2025/11/12
  * @description

@@ -5,6 +5,7 @@ import com.github.util.inference.syllogism.entity.PropositionConstant;
 import lombok.Data;
 
 /**
+ * 标准直言命题生成器
  * @author wangjj7
  * @date 2025/11/24
  * @description

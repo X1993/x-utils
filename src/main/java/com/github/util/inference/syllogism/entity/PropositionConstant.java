@@ -1,7 +1,7 @@
 package com.github.util.inference.syllogism.entity;
 
 /**
- * 命题定义
+ * 命题常量
  * @author wangjj7
  * @date 2025/11/12
  * @description

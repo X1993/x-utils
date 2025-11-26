@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 三段论校验器
  * @author wangjj7
  * @date 2025/11/12
  * @description
