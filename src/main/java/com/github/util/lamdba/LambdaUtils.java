@@ -109,18 +109,7 @@ public class LambdaUtils {
      * @return
      */
     public static <T> XSupplier<T> cache(Supplier<T> supplier){
-        return new XSupplier<T>() {
-
-            private T cacheResult;
-
-            @Override
-            public T get() {
-                if (cacheResult != null){
-                    return cacheResult;
-                }
-                return cacheResult = supplier.get();
-            }
-        };
+        return XCacheSupplier.of(supplier);
     }
 
 }

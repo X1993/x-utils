@@ -9,21 +9,21 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @date 2024/9/5
  * @description
  */
-public class FixedCacheSupplierTest {
+public class XFixedCacheSupplierTest {
 
     @Test
     public void getTest() throws InterruptedException {
         AtomicInteger atomicInteger = new AtomicInteger();
-        FixedCacheSupplier<Integer> fixedCacheSupplier = new FixedCacheSupplier<>(
+        XFixedCacheSupplier<Integer> XFixedCacheSupplier = new XFixedCacheSupplier<>(
                 100 ,() -> atomicInteger.getAndIncrement());
-        Assert.assertTrue(fixedCacheSupplier.get() == 0);
-        Assert.assertTrue(fixedCacheSupplier.get() == 0);
+        Assert.assertTrue(XFixedCacheSupplier.get() == 0);
+        Assert.assertTrue(XFixedCacheSupplier.get() == 0);
         Thread.sleep(110);
-        Assert.assertTrue(fixedCacheSupplier.get() == 1);
+        Assert.assertTrue(XFixedCacheSupplier.get() == 1);
         Thread.sleep(30);
-        Assert.assertTrue(fixedCacheSupplier.get() == 1);
+        Assert.assertTrue(XFixedCacheSupplier.get() == 1);
         Thread.sleep(100);
-        Assert.assertTrue(fixedCacheSupplier.get() == 2);
+        Assert.assertTrue(XFixedCacheSupplier.get() == 2);
     }
 
 }

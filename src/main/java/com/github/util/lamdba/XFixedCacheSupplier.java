@@ -12,7 +12,7 @@ import java.util.function.Supplier;
  * @date 2024/9/4
  * @description
  */
-public class FixedCacheSupplier<V> implements Supplier<V> {
+public class XFixedCacheSupplier<V> implements Supplier<V> {
 
     //过期时长，毫秒
     private final long expireMS;
@@ -23,7 +23,7 @@ public class FixedCacheSupplier<V> implements Supplier<V> {
     //最近一次查询时间戳
     private AtomicReference<ValueHolder<V>> lastedValueHolderReference = new AtomicReference<>();
 
-    public FixedCacheSupplier(long expireMS ,Supplier<V> valueQuery) {
+    public XFixedCacheSupplier(long expireMS ,Supplier<V> valueQuery) {
         if (expireMS <= 0 || valueQuery == null){
             throw new IllegalArgumentException();
         }
@@ -31,7 +31,7 @@ public class FixedCacheSupplier<V> implements Supplier<V> {
         this.valueQuery = valueQuery;
     }
 
-    public FixedCacheSupplier(int expireTime ,TimeUnit timeUnit ,Supplier<V> valueQuery) {
+    public XFixedCacheSupplier(int expireTime , TimeUnit timeUnit , Supplier<V> valueQuery) {
         this(timeUnit.toMillis(expireTime) ,valueQuery);
     }
 
