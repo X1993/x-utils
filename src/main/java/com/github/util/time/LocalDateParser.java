@@ -8,21 +8,73 @@ import java.util.*;
 /**
  * 基于前缀树的日期解析工具类
  * 支持多种常见日期格式的高效匹配和解析
+ * @author X1993
+ * @date 2026/03/15
  */
 public class LocalDateParser {
+
+    /**
+     * 字符匹配器接口
+     */
+    private interface CharMatcher {
+        /**
+         * 判断输入字符是否匹配
+         * @param c 输入字符
+         * @return 是否匹配
+         */
+        boolean matches(char c);
+    }
+
+    /**
+     * 精确匹配器：匹配指定字符
+     */
+    private static class ExactMatcher implements CharMatcher {
+        private final char target;
+
+        ExactMatcher(char target) {
+            this.target = target;
+        }
+
+        @Override
+        public boolean matches(char c) {
+            return c == target;
+        }
+    }
+
+    /**
+     * 数字匹配器：匹配任意数字
+     */
+    private static class DigitMatcher implements CharMatcher {
+        static final DigitMatcher INSTANCE = new DigitMatcher();
+
+        @Override
+        public boolean matches(char c) {
+            return Character.isDigit(c);
+        }
+    }
 
     /**
      * 前缀树节点
      */
     private static class TrieNode {
+        // 子节点映射：key 为匹配器的标识字符（用于区分不同分支）
         Map<Character, TrieNode> children = new HashMap<>();
-        DateTimeFormatter formatter; // 叶子节点存储对应的格式化器
-        String pattern;               // 叶子节点存储原始模式字符串
+        // 该节点对应的匹配器
+        CharMatcher matcher;
+        // 叶子节点存储对应的格式化器
+        DateTimeFormatter formatter;
+        // 叶子节点存储原始模式字符串
+        String pattern;
     }
 
     private final TrieNode root;
-    // 备用格式化器（用于前缀树匹配失败时的尝试）
-//    private final DateTimeFormatter[] fallbackFormatters;
+
+    /**
+     * 格式字符集合（这些字符匹配任意数字）
+     */
+    private static final Set<Character> FORMAT_CHARS = new HashSet<>(
+            Arrays.asList('y', 'M', 'd')
+    );
 
     /**
      * 预定义的常见日期格式
@@ -56,87 +108,116 @@ public class LocalDateParser {
         for (String pattern : builder.patterns) {
             insertPattern(pattern);
         }
-        // 备用格式化器（用于前缀树匹配失败时的尝试）
-//        this.fallbackFormatters = builder.patterns.stream()
-//                .map(DateTimeFormatter::ofPattern)
-//                .toArray(DateTimeFormatter[]::new);
     }
 
     /**
      * 将格式模式插入前缀树
-     * 使用格式字符作为键，而非实际日期字符
      */
     private void insertPattern(String pattern) {
         TrieNode node = root;
-        for (char c : pattern.toCharArray()) {
-            node = node.children.computeIfAbsent(c, k -> new TrieNode());
+        // 解析格式字符串，生成规范化字符序列和对应的匹配器
+        List<ParseElement> elements = parsePattern(pattern);
+
+        for (ParseElement element : elements) {
+            // 使用标识字符作为 key
+            char key = element.keyChar;
+            TrieNode child = node.children.get(key);
+            if (child == null) {
+                child = new TrieNode();
+                child.matcher = element.matcher;
+                node.children.put(key, child);
+            }
+            node = child;
         }
         node.formatter = DateTimeFormatter.ofPattern(pattern);
         node.pattern = pattern;
     }
 
     /**
-     * 使用前缀树匹配日期字符串
-     * @param dateStr 日期字符串
-     * @return 匹配到的格式化器，如果未匹配到返回null
+     * 解析元素：包含标识字符和匹配器
      */
-    private DateTimeFormatter matchFormatter(String dateStr) {
-        if (dateStr == null || dateStr.isEmpty()) {
-            return null;
-        }
+    private static class ParseElement {
+        final char keyChar;      // 用于区分分支的标识字符
+        final CharMatcher matcher; // 匹配器
 
-        // 收集所有可能的匹配路径
-        return matchFormatterRecursive(root, dateStr, 0);
+        ParseElement(char keyChar, CharMatcher matcher) {
+            this.keyChar = keyChar;
+            this.matcher = matcher;
+        }
     }
 
     /**
-     * 递归匹配格式化器
+     * 解析格式模式，生成解析元素列表
+     * 处理字面量语法 'xxx'
      */
-    private DateTimeFormatter matchFormatterRecursive(TrieNode node, String dateStr, int index) {
+    private List<ParseElement> parsePattern(String pattern) {
+        List<ParseElement> elements = new ArrayList<>();
+        int i = 0;
+        while (i < pattern.length()) {
+            char c = pattern.charAt(i);
+            if (c == '\'') {
+                // 处理字面量 'xxx'
+                int end = pattern.indexOf('\'', i + 1);
+                if (end > i + 1) {
+                    // 提取字面量内容
+                    for (int j = i + 1; j < end; j++) {
+                        char literal = pattern.charAt(j);
+                        elements.add(new ParseElement(literal, new ExactMatcher(literal)));
+                    }
+                    i = end + 1;
+                } else if (end == i + 1) {
+                    // 空字面量 '' 表示单引号本身
+                    elements.add(new ParseElement('\'', new ExactMatcher('\'')));
+                    i = end + 1;
+                } else {
+                    // 没有结束的单引号
+                    elements.add(new ParseElement(c, new ExactMatcher(c)));
+                    i++;
+                }
+            } else if (FORMAT_CHARS.contains(c)) {
+                // 格式字符：匹配任意数字
+                elements.add(new ParseElement(c, DigitMatcher.INSTANCE));
+                i++;
+            } else {
+                // 普通字符：精确匹配
+                elements.add(new ParseElement(c, new ExactMatcher(c)));
+                i++;
+            }
+        }
+        return elements;
+    }
+
+    /**
+     * 使用前缀树匹配日期字符串
+     */
+    private TrieNode matchNode(String dateStr) {
+        if (dateStr == null || dateStr.isEmpty()) {
+            return null;
+        }
+        return matchNodeRecursive(root, dateStr, 0);
+    }
+
+    /**
+     * 递归匹配节点
+     */
+    private TrieNode matchNodeRecursive(TrieNode node, String dateStr, int index) {
         if (index == dateStr.length()) {
-            return node.formatter;
+            return node.formatter != null ? node : null;
         }
 
         char c = dateStr.charAt(index);
-        DateTimeFormatter result = null;
 
-        // 尝试精确匹配
-        TrieNode childTrieNode = node.children.get(c);
-        if (childTrieNode != null) {
-            result = matchFormatterRecursive(childTrieNode, dateStr, index + 1);
-        }
-
-        // 尝试通配符匹配（y, M, d, H, m, s等格式字符可以匹配数字）
-        if (result == null) {
-            for (Map.Entry<Character, TrieNode> entry : node.children.entrySet()) {
-                char patternChar = entry.getKey();
-                if (isMatchForFormatChar(c, patternChar)) {
-                    result = matchFormatterRecursive(entry.getValue(), dateStr, index + 1);
-                    if (result != null) {
-                        return result;
-                    }
+        // 遍历所有子节点，找到匹配的分支
+        for (TrieNode child : node.children.values()) {
+            if (child.matcher != null && child.matcher.matches(c)) {
+                TrieNode result = matchNodeRecursive(child, dateStr, index + 1);
+                if (result != null) {
+                    return result;
                 }
             }
         }
 
-        return result;
-    }
-
-    /**
-     * 判断字符是否为格式字符
-     */
-    private boolean isFormatChar(char c) {
-        return c == 'y' || c == 'M' || c == 'd' || c == 'H' || c == 'm' || c == 's';
-    }
-
-    /**
-     * 判断日期字符是否匹配格式字符
-     */
-    private boolean isMatchForFormatChar(char dateChar, char formatChar) {
-        if (isFormatChar(formatChar)) {
-            return Character.isDigit(dateChar);
-        }
-        return dateChar == formatChar;
+        return null;
     }
 
     /**
@@ -150,25 +231,14 @@ public class LocalDateParser {
 
         String trimmed = dateStr.trim();
 
-        // 首先尝试前缀树匹配
-        DateTimeFormatter formatter = matchFormatter(trimmed);
-        if (formatter != null) {
+        TrieNode matchedNode = matchNode(trimmed);
+        if (matchedNode != null) {
             try {
-                LocalDate localDate = LocalDate.parse(trimmed, formatter);
-                return localDate;
+                return LocalDate.parse(trimmed, matchedNode.formatter);
             } catch (DateTimeParseException ignored) {
-                // 前缀树匹配失败，继续尝试备用格式
+                // 前缀树匹配失败
             }
         }
-
-        // 尝试备用格式化器
-//        for (DateTimeFormatter fallback : fallbackFormatters) {
-//            try {
-//                return LocalDate.parse(trimmed, fallback);
-//            } catch (DateTimeParseException ignored) {
-//                // 继续尝试下一个格式
-//            }
-//        }
 
         throw new DateTimeParseException("无法解析日期: " + dateStr, dateStr, 0);
     }
@@ -205,37 +275,8 @@ public class LocalDateParser {
             return null;
         }
 
-        String trimmed = dateStr.trim();
-        return getPatternRecursive(root, trimmed, 0);
-    }
-
-    private String getPatternRecursive(TrieNode node, String dateStr, int index) {
-        if (index == dateStr.length()) {
-            return node.pattern;
-        }
-
-        char c = dateStr.charAt(index);
-        String result = null;
-
-        // 精确匹配
-        if (node.children.containsKey(c)) {
-            result = getPatternRecursive(node.children.get(c), dateStr, index + 1);
-        }
-
-        // 通配符匹配
-        if (result == null) {
-            for (Map.Entry<Character, TrieNode> entry : node.children.entrySet()) {
-                char patternChar = entry.getKey();
-                if (isFormatChar(patternChar) && isMatchForFormatChar(c, patternChar)) {
-                    result = getPatternRecursive(entry.getValue(), dateStr, index + 1);
-                    if (result != null) {
-                        return result;
-                    }
-                }
-            }
-        }
-
-        return result;
+        TrieNode matchedNode = matchNode(dateStr.trim());
+        return matchedNode != null ? matchedNode.pattern : null;
     }
 
     /**
@@ -245,7 +286,7 @@ public class LocalDateParser {
         return new Builder();
     }
 
-    public static Builder builder(String... patterns){
+    public static Builder builder(String... patterns) {
         return new Builder(patterns);
     }
 
@@ -274,9 +315,7 @@ public class LocalDateParser {
      * 单例持有者
      */
     private static class DefaultHolder {
-
         private static final LocalDateParser INSTANCE = new Builder().build();
-
     }
 
     /**
@@ -287,14 +326,11 @@ public class LocalDateParser {
         private final Set<String> patterns = new LinkedHashSet<>();
 
         public Builder() {
-            // 默认添加所有预定义格式
-            for (String pattern : DEFAULT_PATTERNS) {
-                patterns.add(pattern);
-            }
+            Collections.addAll(patterns, DEFAULT_PATTERNS);
         }
 
-        public Builder (String ... patterns){
-            this.patterns.addAll(Arrays.asList(patterns));
+        public Builder(String... patterns) {
+            Collections.addAll(this.patterns, patterns);
         }
 
         /**
@@ -310,9 +346,7 @@ public class LocalDateParser {
          * 添加多个自定义格式
          */
         public Builder addPatterns(String... patterns) {
-            for (String pattern : patterns) {
-                addPattern(pattern);
-            }
+            Collections.addAll(this.patterns, patterns);
             return this;
         }
 
