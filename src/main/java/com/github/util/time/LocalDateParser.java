@@ -102,6 +102,8 @@ public class LocalDateParser {
         "yyyy年M月d日"
     };
 
+    private static final LocalDateParser INSTANCE = new Builder().addPatterns(DEFAULT_PATTERNS).build();
+
     private LocalDateParser(Builder builder) {
         this.root = new TrieNode();
         // 构建前缀树
@@ -283,18 +285,18 @@ public class LocalDateParser {
      * 创建Builder用于自定义日期格式
      */
     public static Builder builder() {
-        return new Builder();
+        return new Builder().addPatterns(DEFAULT_PATTERNS);
     }
 
     public static Builder builder(String... patterns) {
-        return new Builder(patterns);
+        return new Builder().addPatterns(patterns);
     }
 
     /**
      * 获取默认实例
      */
     public static LocalDateParser getDefault() {
-        return DefaultHolder.INSTANCE;
+        return INSTANCE;
     }
 
     /**
@@ -312,13 +314,6 @@ public class LocalDateParser {
     }
 
     /**
-     * 单例持有者
-     */
-    private static class DefaultHolder {
-        private static final LocalDateParser INSTANCE = new Builder().build();
-    }
-
-    /**
      * Builder类用于自定义日期格式
      */
     public static class Builder {
@@ -326,11 +321,6 @@ public class LocalDateParser {
         private final Set<String> patterns = new LinkedHashSet<>();
 
         public Builder() {
-            Collections.addAll(patterns, DEFAULT_PATTERNS);
-        }
-
-        public Builder(String... patterns) {
-            Collections.addAll(this.patterns, patterns);
         }
 
         /**
