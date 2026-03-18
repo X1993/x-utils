@@ -8,48 +8,91 @@ import java.util.*;
 /**
  * 基于前缀树的日期时间解析工具类
  * 支持多种常见日期时间格式的高效匹配和解析
+ * 优化：连续格式字符合并为单节点，减少树深度
  * @author X1993
- * @date 2026/03/15
  */
 public class LocalDateTimeParser {
 
     /**
-     * 字符匹配器接口
+     * 字符匹配器接口：支持一次匹配多个字符
      */
     private interface CharMatcher {
         /**
-         * 判断输入字符是否匹配
-         * @param c 输入字符
-         * @return 是否匹配
+         * 尝试从指定位置匹配字符
+         * @param input 输入字符串
+         * @param index 起始索引
+         * @return 匹配的字符数，0 表示不匹配
          */
-        boolean matches(char c);
+        int match(String input, int index);
+
+        /**
+         * 获取标识字符串（用于区分不同分支）
+         */
+        String key();
     }
 
     /**
-     * 精确匹配器：匹配指定字符
+     * 精确匹配器：匹配指定字符串
      */
     private static class ExactMatcher implements CharMatcher {
-        private final char target;
+        private final String literal;
 
-        ExactMatcher(char target) {
-            this.target = target;
+        ExactMatcher(String literal) {
+            this.literal = literal;
         }
 
         @Override
-        public boolean matches(char c) {
-            return c == target;
+        public int match(String input, int index) {
+            int len = literal.length();
+            if (index + len > input.length()) {
+                return 0;
+            }
+            for (int i = 0; i < len; i++) {
+                if (input.charAt(index + i) != literal.charAt(i)) {
+                    return 0;
+                }
+            }
+            return len;
+        }
+
+        @Override
+        public String key() {
+            return "'" + literal + "'";
         }
     }
 
     /**
-     * 数字匹配器：匹配任意数字
+     * 数字匹配器：匹配指定数量的数字
      */
     private static class DigitMatcher implements CharMatcher {
-        static final DigitMatcher INSTANCE = new DigitMatcher();
+        private final int count;
+        private final String formatKey;
+
+        DigitMatcher(int count, char formatChar) {
+            this.count = count;
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < count; i++) {
+                sb.append(formatChar);
+            }
+            this.formatKey = sb.toString();
+        }
 
         @Override
-        public boolean matches(char c) {
-            return Character.isDigit(c);
+        public int match(String input, int index) {
+            if (index + count > input.length()) {
+                return 0;
+            }
+            for (int i = 0; i < count; i++) {
+                if (!Character.isDigit(input.charAt(index + i))) {
+                    return 0;
+                }
+            }
+            return count;
+        }
+
+        @Override
+        public String key() {
+            return formatKey;
         }
     }
 
@@ -57,8 +100,8 @@ public class LocalDateTimeParser {
      * 前缀树节点
      */
     private static class TrieNode {
-        // 子节点映射：key 为匹配器的标识字符（用于区分不同分支）
-        Map<Character, TrieNode> children = new HashMap<>();
+        // 子节点映射
+        Map<String, TrieNode> children = new HashMap<>();
         // 该节点对应的匹配器
         CharMatcher matcher;
         // 叶子节点存储对应的格式化器
@@ -70,7 +113,7 @@ public class LocalDateTimeParser {
     private final TrieNode root;
 
     /**
-     * 格式字符集合（这些字符匹配任意数字）
+     * 格式字符集合
      */
     private static final Set<Character> FORMAT_CHARS = new HashSet<>(
             Arrays.asList('y', 'M', 'd', 'H', 'm', 's', 'S')
@@ -126,16 +169,15 @@ public class LocalDateTimeParser {
      */
     private void insertPattern(String pattern) {
         TrieNode node = root;
-        // 解析格式字符串，生成规范化字符序列和对应的匹配器
-        List<ParseElement> elements = parsePattern(pattern);
+        // 解析格式字符串，生成匹配器列表
+        List<CharMatcher> matchers = parsePattern(pattern);
 
-        for (ParseElement element : elements) {
-            // 使用标识字符作为 key
-            char key = element.keyChar;
+        for (CharMatcher matcher : matchers) {
+            String key = matcher.key();
             TrieNode child = node.children.get(key);
             if (child == null) {
                 child = new TrieNode();
-                child.matcher = element.matcher;
+                child.matcher = matcher;
                 node.children.put(key, child);
             }
             node = child;
@@ -145,57 +187,52 @@ public class LocalDateTimeParser {
     }
 
     /**
-     * 解析元素：包含标识字符和匹配器
+     * 解析格式模式，生成匹配器列表
+     * 将连续的格式字符合并为单个匹配器
      */
-    private static class ParseElement {
-        final char keyChar;      // 用于区分分支的标识字符
-        final CharMatcher matcher; // 匹配器
-
-        ParseElement(char keyChar, CharMatcher matcher) {
-            this.keyChar = keyChar;
-            this.matcher = matcher;
-        }
-    }
-
-    /**
-     * 解析格式模式，生成解析元素列表
-     * 处理字面量语法 'xxx'
-     */
-    private List<ParseElement> parsePattern(String pattern) {
-        List<ParseElement> elements = new ArrayList<>();
+    private List<CharMatcher> parsePattern(String pattern) {
+        List<CharMatcher> matchers = new ArrayList<>();
         int i = 0;
         while (i < pattern.length()) {
             char c = pattern.charAt(i);
+
             if (c == '\'') {
                 // 处理字面量 'xxx'
                 int end = pattern.indexOf('\'', i + 1);
                 if (end > i + 1) {
                     // 提取字面量内容
-                    for (int j = i + 1; j < end; j++) {
-                        char literal = pattern.charAt(j);
-                        elements.add(new ParseElement(literal, new ExactMatcher(literal)));
-                    }
+                    String literal = pattern.substring(i + 1, end);
+                    matchers.add(new ExactMatcher(literal));
                     i = end + 1;
                 } else if (end == i + 1) {
                     // 空字面量 '' 表示单引号本身
-                    elements.add(new ParseElement('\'', new ExactMatcher('\'')));
+                    matchers.add(new ExactMatcher("'"));
                     i = end + 1;
                 } else {
                     // 没有结束的单引号
-                    elements.add(new ParseElement(c, new ExactMatcher(c)));
+                    matchers.add(new ExactMatcher("'"));
                     i++;
                 }
             } else if (FORMAT_CHARS.contains(c)) {
-                // 格式字符：匹配任意数字
-                elements.add(new ParseElement(c, DigitMatcher.INSTANCE));
-                i++;
+                // 统计连续相同格式字符的数量
+                int start = i;
+                while (i < pattern.length() && pattern.charAt(i) == c) {
+                    i++;
+                }
+                int count = i - start;
+                // 创建数字匹配器，匹配指定数量的数字
+                matchers.add(new DigitMatcher(count, c));
             } else {
-                // 普通字符：精确匹配
-                elements.add(new ParseElement(c, new ExactMatcher(c)));
-                i++;
+                // 统计连续普通字符
+                int start = i;
+                while (i < pattern.length() && !FORMAT_CHARS.contains(pattern.charAt(i)) && pattern.charAt(i) != '\'') {
+                    i++;
+                }
+                String literal = pattern.substring(start, i);
+                matchers.add(new ExactMatcher(literal));
             }
         }
-        return elements;
+        return matchers;
     }
 
     /**
@@ -216,14 +253,15 @@ public class LocalDateTimeParser {
             return node.formatter != null ? node : null;
         }
 
-        char c = dateTimeStr.charAt(index);
-
         // 遍历所有子节点，找到匹配的分支
         for (TrieNode child : node.children.values()) {
-            if (child.matcher != null && child.matcher.matches(c)) {
-                TrieNode result = matchNodeRecursive(child, dateTimeStr, index + 1);
-                if (result != null) {
-                    return result;
+            if (child.matcher != null) {
+                int matchedLen = child.matcher.match(dateTimeStr, index);
+                if (matchedLen > 0) {
+                    TrieNode result = matchNodeRecursive(child, dateTimeStr, index + matchedLen);
+                    if (result != null) {
+                        return result;
+                    }
                 }
             }
         }
@@ -245,8 +283,7 @@ public class LocalDateTimeParser {
         TrieNode matchedNode = matchNode(trimmed);
         if (matchedNode != null) {
             try {
-                LocalDateTime localDateTime = LocalDateTime.parse(trimmed, matchedNode.formatter);
-                return localDateTime;
+                return LocalDateTime.parse(trimmed, matchedNode.formatter);
             } catch (DateTimeParseException ignored) {
                 // 前缀树匹配失败
             }
