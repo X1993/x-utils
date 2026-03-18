@@ -108,6 +108,8 @@ public class LocalDateParser {
         DateTimeFormatter formatter;
         // 叶子节点存储原始模式字符串
         String pattern;
+        // 该节点及其子节点下的格式化器总数
+        int formatterCount;
     }
 
     private final TrieNode root;
@@ -163,6 +165,10 @@ public class LocalDateParser {
         // 解析格式字符串，生成匹配器列表
         List<CharMatcher> matchers = parsePattern(pattern);
 
+        // 记录路径上的所有节点，用于更新 formatterCount
+        List<TrieNode> path = new ArrayList<>();
+        path.add(root);
+
         for (CharMatcher matcher : matchers) {
             String key = matcher.key();
             TrieNode child = node.children.get(key);
@@ -172,9 +178,15 @@ public class LocalDateParser {
                 node.children.put(key, child);
             }
             node = child;
+            path.add(node);
         }
         node.formatter = DateTimeFormatter.ofPattern(pattern);
         node.pattern = pattern;
+
+        // 更新路径上所有节点的 formatterCount
+        for (TrieNode pathNode : path) {
+            pathNode.formatterCount++;
+        }
     }
 
     /**
@@ -246,6 +258,10 @@ public class LocalDateParser {
 
         // 遍历所有子节点，找到匹配的分支
         for (TrieNode child : node.children.values()) {
+            // 优化：跳过没有格式化器的分支
+            if (child.formatterCount == 0) {
+                continue;
+            }
             if (child.matcher != null) {
                 int matchedLen = child.matcher.match(dateStr, index);
                 if (matchedLen > 0) {
