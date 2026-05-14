@@ -15,14 +15,14 @@ import static org.junit.jupiter.api.Assertions.*;
  * DateParser 测试类
  */
 @DisplayName("DateParser 日期解析工具测试")
-class LocalDateParserTest {
+class XLocalDateParserTest {
 
     // ==================== 基础解析测试 ====================
 
     @Test
     @DisplayName("解析 yyyy-MM-dd 格式")
     void testParseStandardFormat() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
 
         LocalDate result = parser.parse("2024-03-15");
         assertEquals(LocalDate.of(2024, 3, 15), result);
@@ -31,7 +31,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("解析 yyyy-M-d 格式（单数字月日）")
     void testParseSingleDigitMonthDay() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
 
         LocalDate result = parser.parse("2024-3-5");
         assertEquals(LocalDate.of(2024, 3, 5), result);
@@ -40,7 +40,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("解析 yyyy/MM/dd 格式")
     void testParseSlashFormat() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
 
         LocalDate result = parser.parse("2024/03/15");
         assertEquals(LocalDate.of(2024, 3, 15), result);
@@ -49,7 +49,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("解析 yyyy/M/d 格式（斜杠单数字）")
     void testParseSlashSingleDigit() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
 
         LocalDate result = parser.parse("2024/3/5");
         assertEquals(LocalDate.of(2024, 3, 5), result);
@@ -58,7 +58,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("解析 yyyy.MM.dd 格式")
     void testParseDotFormat() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
 
         LocalDate result = parser.parse("2024.03.15");
         assertEquals(LocalDate.of(2024, 3, 15), result);
@@ -67,7 +67,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("解析 yyyyMMdd 格式（无分隔符）")
     void testParseCompactFormat() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
 
         LocalDate result = parser.parse("20240315");
         assertEquals(LocalDate.of(2024, 3, 15), result);
@@ -76,7 +76,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("解析中文格式 yyyy年MM月dd日")
     void testParseChineseFormat() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
 
         LocalDate result = parser.parse("2024年03月15日");
         assertEquals(LocalDate.of(2024, 3, 15), result);
@@ -85,7 +85,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("解析中文格式 yyyy年M月d日（单数字）")
     void testParseChineseSingleDigitFormat() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
 
         LocalDate result = parser.parse("2024年3月5日");
         assertEquals(LocalDate.of(2024, 3, 5), result);
@@ -121,7 +121,7 @@ class LocalDateParserTest {
     @MethodSource("provideDateStrings")
     @DisplayName("参数化测试：解析各种日期格式")
     void testParseVariousFormats(String dateStr, LocalDate expected) {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
         assertEquals(expected, parser.parse(dateStr));
     }
 
@@ -130,7 +130,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("解析闰年日期")
     void testParseLeapYear() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
 
         assertEquals(LocalDate.of(2024, 2, 29), parser.parse("2024-02-29"));
         assertEquals(LocalDate.of(2020, 2, 29), parser.parse("2020-02-29"));
@@ -139,7 +139,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("解析前后有空格的日期")
     void testParseWithWhitespace() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
 
         assertEquals(LocalDate.of(2024, 3, 15), parser.parse("  2024-03-15  "));
         assertEquals(LocalDate.of(2024, 3, 15), parser.parse("\t2024-03-15\n"));
@@ -148,7 +148,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("解析空字符串抛出异常")
     void testParseEmptyString() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
 
         assertThrows(DateTimeParseException.class, () -> parser.parse(""));
         assertThrows(DateTimeParseException.class, () -> parser.parse("   "));
@@ -157,7 +157,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("解析null抛出NullPointerException")
     void testParseNull() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
 
         assertThrows(NullPointerException.class, () -> parser.parse(null));
     }
@@ -165,7 +165,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("解析无效日期抛出异常")
     void testParseInvalidDate() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
 
         assertThrows(DateTimeParseException.class, () -> parser.parse("2024-13-01")); // 无效月份
 //        assertThrows(DateTimeParseException.class, () -> parser.parse("2024-02-30")); // 无效日期
@@ -178,7 +178,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("安全解析：有效日期返回结果")
     void testParseSafelyValid() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
 
         assertEquals(LocalDate.of(2024, 3, 15), parser.parseSafely("2024-03-15"));
         assertEquals(LocalDate.of(2024, 1, 5), parser.parseSafely("2024-1-5"));
@@ -187,7 +187,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("安全解析：无效日期返回null")
     void testParseSafelyInvalid() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
 
         assertNull(parser.parseSafely("invalid"));
         assertNull(parser.parseSafely("2024-13-01"));
@@ -200,7 +200,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("isValidDate：验证日期有效性")
     void testIsValidDate() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
 
         assertTrue(parser.isValidDate("2024-03-15"));
         assertTrue(parser.isValidDate("2024/3/5"));
@@ -217,7 +217,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("getPattern：获取日期格式模式")
     void testGetPattern() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
 
         // 注意：由于前缀树可能匹配多个格式，这里验证能匹配到某个有效格式
         assertNotNull(parser.getPattern("2024-03-15"));
@@ -232,15 +232,15 @@ class LocalDateParserTest {
     @Test
     @DisplayName("静态方法 parseDate")
     void testStaticParseDate() {
-        assertEquals(LocalDate.of(2024, 3, 15), LocalDateParser.parseDate("2024-03-15"));
-        assertEquals(LocalDate.of(2024, 1, 5), LocalDateParser.parseDate("2024-1-5"));
+        assertEquals(LocalDate.of(2024, 3, 15), XLocalDateParser.parseDate("2024-03-15"));
+        assertEquals(LocalDate.of(2024, 1, 5), XLocalDateParser.parseDate("2024-1-5"));
     }
 
     @Test
     @DisplayName("静态方法 parseDateSafely")
     void testStaticParseDateSafely() {
-        assertEquals(LocalDate.of(2024, 3, 15), LocalDateParser.parseDateSafely("2024-03-15"));
-        assertNull(LocalDateParser.parseDateSafely("invalid"));
+        assertEquals(LocalDate.of(2024, 3, 15), XLocalDateParser.parseDateSafely("2024-03-15"));
+        assertNull(XLocalDateParser.parseDateSafely("invalid"));
     }
 
     // ==================== Builder 模式测试 ====================
@@ -248,7 +248,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("Builder：自定义格式")
     void testBuilderCustomPattern() {
-        LocalDateParser parser = LocalDateParser.builder()
+        XLocalDateParser parser = XLocalDateParser.builder()
                 .clearPatterns()
                 .addPattern("yyyy|MM|dd")
                 .build();
@@ -260,7 +260,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("Builder：添加多个格式")
     void testBuilderAddMultiplePatterns() {
-        LocalDateParser parser = LocalDateParser.builder()
+        XLocalDateParser parser = XLocalDateParser.builder()
                 .addPatterns("yyyy|MM|dd", "yyyy*MM*dd")
                 .build();
 
@@ -271,7 +271,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("Builder：移除格式")
     void testBuilderRemovePattern() {
-        LocalDateParser parser = LocalDateParser.builder()
+        XLocalDateParser parser = XLocalDateParser.builder()
                 .removePattern("yyyy-MM-dd")
                 .build();
 
@@ -283,7 +283,7 @@ class LocalDateParserTest {
     @DisplayName("Builder：空格式抛出异常")
     void testBuilderEmptyPatterns() {
         assertThrows(IllegalStateException.class, () ->
-            LocalDateParser.builder().clearPatterns().build()
+            XLocalDateParser.builder().clearPatterns().build()
         );
     }
 
@@ -292,7 +292,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("性能测试：批量解析")
     void testPerformance() {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
         String[] dates = {
             "2024-01-01", "2024/02/15", "2024.03.20", "20240410",
             "2024-5-5", "2024/6/6", "2024.7.7",
@@ -322,7 +322,7 @@ class LocalDateParserTest {
     @Test
     @DisplayName("并发测试：多线程解析")
     void testConcurrentParsing() throws InterruptedException {
-        LocalDateParser parser = LocalDateParser.getDefault();
+        XLocalDateParser parser = XLocalDateParser.getDefault();
         int threadCount = 10;
         int iterationsPerThread = 100;
         Thread[] threads = new Thread[threadCount];

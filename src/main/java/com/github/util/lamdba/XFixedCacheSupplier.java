@@ -43,6 +43,7 @@ public class XFixedCacheSupplier<V> implements Supplier<V> {
             if (lastedValueHolder != null && currentTimeMillis - lastedValueHolder.lastedQueryTimeMillis <= expireMS){
                 return lastedValueHolder.value;
             }
+            //已过期重新加载
             V value = valueQuery.get();
             if (lastedValueHolderReference.compareAndSet(lastedValueHolder, new ValueHolder<>(currentTimeMillis, value))) {
                 return value;

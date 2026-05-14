@@ -11,7 +11,7 @@ import java.util.*;
  * 优化：连续格式字符合并为单节点，减少树深度
  * @author X1993
  */
-public class LocalDateTimeParser {
+public class XLocalDateTimeParser {
 
     /**
      * 字符匹配器接口：支持一次匹配多个字符
@@ -149,6 +149,9 @@ public class LocalDateTimeParser {
         // 带毫秒
         "yyyy-MM-dd HH:mm:ss.SSS",
         "yyyy-MM-dd HH:mm:ss.S",
+        // ISO 格式带毫秒
+        "yyyy-MM-dd'T'HH:mm:ss.SSS",
+        "yyyy-MM-dd'T'HH:mm:ss.S",
         // 中文格式
         "yyyy年MM月dd日 HH时mm分ss秒",
         "yyyy年MM月dd日 HH时mm分",
@@ -156,9 +159,9 @@ public class LocalDateTimeParser {
         "yyyy年M月d日 H时m分"
     };
 
-    private static final LocalDateTimeParser INSTANCE = new Builder().addPatterns(DEFAULT_PATTERNS).build();
+    private static final XLocalDateTimeParser INSTANCE = new Builder().addPatterns(DEFAULT_PATTERNS).build();
 
-    private LocalDateTimeParser(Builder builder) {
+    private XLocalDateTimeParser(Builder builder) {
         this.root = new TrieNode();
         // 构建前缀树
         for (String pattern : builder.patterns) {
@@ -286,6 +289,46 @@ public class LocalDateTimeParser {
     }
 
     /**
+     * 去除字符串末尾的时区偏移信息（LocalDateTime 不含时区，直接丢弃）
+     * <p>支持格式：Z、+/-HHMM、+/-HH:MM、+/-HH</p>
+     */
+    private static String stripZoneOffset(String str) {
+        if (str.endsWith("Z")) {
+            return str.substring(0, str.length() - 1);
+        }
+        int len = str.length();
+        // 从最长模式开始检查，避免歧义
+        // +/-HH:MM (sign + 5 chars = 6)
+        if (len >= 6) {
+            char s = str.charAt(len - 6);
+            if ((s == '+' || s == '-')
+                    && Character.isDigit(str.charAt(len - 5)) && Character.isDigit(str.charAt(len - 4))
+                    && str.charAt(len - 3) == ':'
+                    && Character.isDigit(str.charAt(len - 2)) && Character.isDigit(str.charAt(len - 1))) {
+                return str.substring(0, len - 6);
+            }
+        }
+        // +/-HHMM (sign + 4 chars = 5)
+        if (len >= 5) {
+            char s = str.charAt(len - 5);
+            if ((s == '+' || s == '-')
+                    && Character.isDigit(str.charAt(len - 4)) && Character.isDigit(str.charAt(len - 3))
+                    && Character.isDigit(str.charAt(len - 2)) && Character.isDigit(str.charAt(len - 1))) {
+                return str.substring(0, len - 5);
+            }
+        }
+        // +/-HH (sign + 2 chars = 3)
+        if (len >= 3) {
+            char s = str.charAt(len - 3);
+            if ((s == '+' || s == '-')
+                    && Character.isDigit(str.charAt(len - 2)) && Character.isDigit(str.charAt(len - 1))) {
+                return str.substring(0, len - 3);
+            }
+        }
+        return str;
+    }
+
+    /**
      * 解析日期时间字符串为 LocalDateTime
      * @param dateTimeStr 日期时间字符串
      * @return 解析后的 LocalDateTime
@@ -296,10 +339,12 @@ public class LocalDateTimeParser {
 
         String trimmed = dateTimeStr.trim();
 
-        TrieNode matchedNode = matchNode(trimmed);
+        String normalized = stripZoneOffset(trimmed);
+
+        TrieNode matchedNode = matchNode(normalized);
         if (matchedNode != null) {
             try {
-                return LocalDateTime.parse(trimmed, matchedNode.formatter);
+                return LocalDateTime.parse(normalized, matchedNode.formatter);
             } catch (DateTimeParseException ignored) {
                 // 前缀树匹配失败
             }
@@ -358,7 +403,7 @@ public class LocalDateTimeParser {
     /**
      * 获取默认实例
      */
-    public static LocalDateTimeParser getDefault() {
+    public static XLocalDateTimeParser getDefault() {
         return INSTANCE;
     }
 
@@ -422,11 +467,11 @@ public class LocalDateTimeParser {
         /**
          * 构建 LocalDateTimeParser 实例
          */
-        public LocalDateTimeParser build() {
+        public XLocalDateTimeParser build() {
             if (patterns.isEmpty()) {
                 throw new IllegalStateException("至少需要添加一个日期时间格式");
             }
-            return new LocalDateTimeParser(this);
+            return new XLocalDateTimeParser(this);
         }
     }
 }

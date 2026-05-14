@@ -11,7 +11,7 @@ import java.util.*;
  * 优化：连续格式字符合并为单节点，减少树深度
  * @author X1993
  */
-public class LocalDateParser {
+public class XLocalDateParser {
 
     /**
      * 字符匹配器接口：支持一次匹配多个字符
@@ -147,9 +147,9 @@ public class LocalDateParser {
         "yyyy年M月d日"
     };
 
-    private static final LocalDateParser INSTANCE = new Builder().addPatterns(DEFAULT_PATTERNS).build();
+    private static final XLocalDateParser INSTANCE = new Builder().addPatterns(DEFAULT_PATTERNS).build();
 
-    private LocalDateParser(Builder builder) {
+    private XLocalDateParser(Builder builder) {
         this.root = new TrieNode();
         // 构建前缀树
         for (String pattern : builder.patterns) {
@@ -349,7 +349,7 @@ public class LocalDateParser {
     /**
      * 获取默认实例
      */
-    public static LocalDateParser getDefault() {
+    public static XLocalDateParser getDefault() {
         return INSTANCE;
     }
 
@@ -413,11 +413,11 @@ public class LocalDateParser {
         /**
          * 构建DateParser实例
          */
-        public LocalDateParser build() {
+        public XLocalDateParser build() {
             if (patterns.isEmpty()) {
                 throw new IllegalStateException("至少需要添加一个日期格式");
             }
-            return new LocalDateParser(this);
+            return new XLocalDateParser(this);
         }
     }
 }
