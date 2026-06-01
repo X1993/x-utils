@@ -30,12 +30,12 @@ public class DatePartitionFunctionTest {
         private Date endTime;
 
         @Override
-        public Date $readStartTime() {
+        public Date $readStartBorder() {
             return startTime;
         }
 
         @Override
-        public Date $readEndTime() {
+        public Date $readEndBorder() {
             return endTime;
         }
 

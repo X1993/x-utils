@@ -28,12 +28,12 @@ public class LocalDateTimePartitionFunctionTest {
         private LocalDateTime endTime;
 
         @Override
-        public LocalDateTime $readStartTime() {
+        public LocalDateTime $readStartBorder() {
             return startTime;
         }
 
         @Override
-        public LocalDateTime $readEndTime() {
+        public LocalDateTime $readEndBorder() {
             return endTime;
         }
 

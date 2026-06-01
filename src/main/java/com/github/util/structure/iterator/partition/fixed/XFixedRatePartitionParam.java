@@ -1,7 +1,7 @@
 package com.github.util.structure.iterator.partition.fixed;
 
 /**
- * 按时间分区的参数
+ * 分片参数
  * @author wangjj7
  * @date 2023/8/9
  * @description
@@ -10,16 +10,16 @@ package com.github.util.structure.iterator.partition.fixed;
 public interface XFixedRatePartitionParam<V ,CHILD extends XFixedRatePartitionParam<V ,CHILD>> {
 
     /**
-     * 获取开始时间
+     * 获取开始边界
      * @return
      */
-    V $readStartTime();
+    V $readStartBorder();
 
     /**
-     * 设置结束时间
+     * 设置结束边界
      * @return
      */
-    V $readEndTime();
+    V $readEndBorder();
 
     /**
      * 获取分区参数
@@ -32,7 +32,7 @@ public interface XFixedRatePartitionParam<V ,CHILD extends XFixedRatePartitionPa
      * @return
      */
     default CHILD copy(){
-        return $partitionParam($readStartTime() ,$readEndTime());
+        return $partitionParam($readStartBorder() , $readEndBorder());
     }
 
 }

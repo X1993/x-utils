@@ -49,7 +49,7 @@ public abstract class XFixedRatePartitionFunction<T ,V ,P extends XFixedRatePart
 
     public XFixedRatePartitionFunction(P sourceParam, int partitionSize, Function<P, List<T>> queryFunction)
     {
-        if (sourceParam == null || sourceParam.$readStartTime() == null || sourceParam.$readEndTime() == null
+        if (sourceParam == null || sourceParam.$readStartBorder() == null || sourceParam.$readEndBorder() == null
                 || partitionSize < 1 || queryFunction == null) {
             throw new IllegalArgumentException();
         }
@@ -82,7 +82,7 @@ public abstract class XFixedRatePartitionFunction<T ,V ,P extends XFixedRatePart
             throw new IllegalStateException();
         }
 
-        if (compare(currentParam.$readStartTime() ,currentParam.$readEndTime()) > 0)
+        if (compare(currentParam.$readStartBorder() ,currentParam.$readEndBorder()) > 0)
         {
             throw new IllegalStateException("分片开始时间不能大于结束时间");
         }
@@ -106,15 +106,15 @@ public abstract class XFixedRatePartitionFunction<T ,V ,P extends XFixedRatePart
         V partitionStart = null;
         V partitionEnd = null;
         if (asc) {
-            partitionStart = sourceParam.$readStartTime();
+            partitionStart = sourceParam.$readStartBorder();
             partitionEnd = plus(partitionStart ,partitionSize);
-            partitionEnd = compare(partitionEnd ,sourceParam.$readEndTime()) < 0 ?
-                    partitionEnd : sourceParam.$readEndTime();
+            partitionEnd = compare(partitionEnd ,sourceParam.$readEndBorder()) < 0 ?
+                    partitionEnd : sourceParam.$readEndBorder();
         }else {
-            partitionEnd = sourceParam.$readEndTime();
+            partitionEnd = sourceParam.$readEndBorder();
             partitionStart = plus(partitionEnd ,-partitionSize);
-            partitionStart = compare(partitionStart ,sourceParam.$readStartTime()) > 0 ?
-                    partitionStart : sourceParam.$readStartTime();
+            partitionStart = compare(partitionStart ,sourceParam.$readStartBorder()) > 0 ?
+                    partitionStart : sourceParam.$readStartBorder();
         }
         return sourceParam.$partitionParam(partitionStart ,partitionEnd);
     }
@@ -129,19 +129,19 @@ public abstract class XFixedRatePartitionFunction<T ,V ,P extends XFixedRatePart
         V partitionStart = null;
         V partitionEnd = null;
         if (asc) {
-            partitionStart = plus(param0.$readEndTime() ,partitionInterval);
-            partitionStart = compare(partitionStart ,sourceParam.$readEndTime()) < 0 ?
-                    partitionStart : sourceParam.$readEndTime();
+            partitionStart = plus(param0.$readEndBorder() ,partitionInterval);
+            partitionStart = compare(partitionStart ,sourceParam.$readEndBorder()) < 0 ?
+                    partitionStart : sourceParam.$readEndBorder();
             partitionEnd = plus(partitionStart ,partitionSize);
-            partitionEnd = compare(partitionEnd ,sourceParam.$readEndTime()) < 0 ?
-                    partitionEnd : sourceParam.$readEndTime();
+            partitionEnd = compare(partitionEnd ,sourceParam.$readEndBorder()) < 0 ?
+                    partitionEnd : sourceParam.$readEndBorder();
         }else {
-            partitionEnd = plus(param0.$readStartTime() ,-partitionInterval);
-            partitionEnd = compare(partitionEnd ,sourceParam.$readStartTime()) > 0 ?
-                    partitionEnd : sourceParam.$readStartTime();
+            partitionEnd = plus(param0.$readStartBorder() ,-partitionInterval);
+            partitionEnd = compare(partitionEnd ,sourceParam.$readStartBorder()) > 0 ?
+                    partitionEnd : sourceParam.$readStartBorder();
             partitionStart = plus(partitionEnd ,-partitionSize);
-            partitionStart = compare(partitionStart ,sourceParam.$readStartTime()) > 0 ?
-                    partitionStart : sourceParam.$readStartTime();
+            partitionStart = compare(partitionStart ,sourceParam.$readStartBorder()) > 0 ?
+                    partitionStart : sourceParam.$readStartBorder();
         }
         return sourceParam.$partitionParam(partitionStart ,partitionEnd);
     }
@@ -149,9 +149,9 @@ public abstract class XFixedRatePartitionFunction<T ,V ,P extends XFixedRatePart
     //是否有下一个分片
     private boolean hasNextPartition(P param0){
         if (asc){
-            return compare(param0.$readEndTime() ,sourceParam.$readEndTime()) < 0;
+            return compare(param0.$readEndBorder() ,sourceParam.$readEndBorder()) < 0;
         }else {
-            return compare(param0.$readStartTime() ,sourceParam.$readStartTime()) > 0;
+            return compare(param0.$readStartBorder() ,sourceParam.$readStartBorder()) > 0;
         }
     }
 
