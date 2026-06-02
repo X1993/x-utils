@@ -10,12 +10,12 @@ import java.util.function.Function;
  * @date 2023/8/14
  * @description
  */
-public class DatePartitionFunction<T ,P extends XFixedRatePartitionParam<Date, P>>
+public class XFixedRateDatePartitionFunction<T ,P extends XFixedRatePartitionFunction.Param<Date, P>>
         extends XFixedRatePartitionFunction<T, Date, P> {
 
     private final TimeUnit timeUnit;
 
-    public DatePartitionFunction(P sourceParam, int partitionSize ,TimeUnit timeUnit, Function<P, List<T>> queryFunction)
+    public XFixedRateDatePartitionFunction(P sourceParam, int partitionSize , TimeUnit timeUnit, Function<P, List<T>> queryFunction)
     {
         super(sourceParam, partitionSize, queryFunction);
         this.timeUnit = timeUnit;

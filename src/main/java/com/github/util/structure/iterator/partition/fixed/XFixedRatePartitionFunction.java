@@ -13,15 +13,15 @@ import java.util.function.Function;
  * @description
  * @param <P> 分片查询参数的类型
  * @param <T> 分片查询的数据类型
- * @param <V> 分片的大小的单位
+ * @param <P_BORDER> 分片的大小的单位
  */
 @Data
 @Accessors(chain = true)
-public abstract class XFixedRatePartitionFunction<T ,V ,P extends XFixedRatePartitionParam<V, P>>
+public abstract class XFixedRatePartitionFunction<T , P_BORDER, P extends XFixedRatePartitionFunction.Param<P_BORDER, P>>
         implements XPartitionFunction<T ,P> {
 
     /**
-     * 完整参数，指定分片的边界
+     * 完整参数，指定数据的总查询范围
      */
     private final P sourceParam;
 
@@ -37,6 +37,7 @@ public abstract class XFixedRatePartitionFunction<T ,V ,P extends XFixedRatePart
 
     /**
      * 分片间隔
+     * 设计目的：有些接口是按维度范围[startBorder, endBorder]查询的且包含两端，如果不设置间隔边界值会重复查询
      */
     private long partitionInterval = 0;
 
@@ -60,19 +61,19 @@ public abstract class XFixedRatePartitionFunction<T ,V ,P extends XFixedRatePart
 
     /**
      * 维度增加若干个单位
-     * @param v
+     * @param P_BORDER
      * @param amountToAdd
      * @return
      */
-    abstract V plus(V v ,long amountToAdd);
+    abstract P_BORDER plus(P_BORDER P_BORDER, long amountToAdd);
 
     /**
      * 比较两个维度的大小
-     * @param v0
-     * @param v1
+     * @param PBORDER0
+     * @param PBORDER1
      * @return
      */
-    abstract int compare(V v0 ,V v1);
+    abstract int compare(P_BORDER PBORDER0, P_BORDER PBORDER1);
 
     @Override
     public Output<T, P> select(Input<T, P> input)
@@ -90,7 +91,7 @@ public abstract class XFixedRatePartitionFunction<T ,V ,P extends XFixedRatePart
         //复制一下避免查询的时候修改了原参数影响后续参数的创建
         P inputParam = currentParam.copy();
         if (inputParam == null){
-            throw new IllegalStateException("copy实现异常");
+            throw new IllegalStateException("参数复制异常");
         }
         List<T> resultList = queryFunction.apply(inputParam);
 
@@ -103,8 +104,8 @@ public abstract class XFixedRatePartitionFunction<T ,V ,P extends XFixedRatePart
     @Override
     public P firstInputParam()
     {
-        V partitionStart = null;
-        V partitionEnd = null;
+        P_BORDER partitionStart = null;
+        P_BORDER partitionEnd = null;
         if (asc) {
             partitionStart = sourceParam.$readStartBorder();
             partitionEnd = plus(partitionStart ,partitionSize);
@@ -126,8 +127,8 @@ public abstract class XFixedRatePartitionFunction<T ,V ,P extends XFixedRatePart
             return null;
         }
 
-        V partitionStart = null;
-        V partitionEnd = null;
+        P_BORDER partitionStart = null;
+        P_BORDER partitionEnd = null;
         if (asc) {
             partitionStart = plus(param0.$readEndBorder() ,partitionInterval);
             partitionStart = compare(partitionStart ,sourceParam.$readEndBorder()) < 0 ?
@@ -153,6 +154,43 @@ public abstract class XFixedRatePartitionFunction<T ,V ,P extends XFixedRatePart
         }else {
             return compare(param0.$readStartBorder() ,sourceParam.$readStartBorder()) > 0;
         }
+    }
+
+    /**
+     * 分片参数
+     * @author wangjj7
+     * @date 2023/8/9
+     * @description
+     * @param <P_BORDER> 分片的维度（单位）
+     */
+    public interface Param<P_BORDER,P extends Param<P_BORDER, P>> {
+
+        /**
+         * 获取开始边界
+         * @return
+         */
+        P_BORDER $readStartBorder();
+
+        /**
+         * 设置结束边界
+         * @return
+         */
+        P_BORDER $readEndBorder();
+
+        /**
+         * 获取分区参数
+         * @return
+         */
+        P $partitionParam(P_BORDER partitionStartPBORDER, P_BORDER partitionEndPBORDER);
+
+        /**
+         * 复制
+         * @return
+         */
+        default P copy(){
+            return $partitionParam($readStartBorder() , $readEndBorder());
+        }
+
     }
 
 }

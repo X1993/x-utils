@@ -10,13 +10,13 @@ import java.util.function.Function;
  * @date 2023/8/14
  * @description
  */
-public class LocalDatePartitionFunction<T ,P extends XFixedRatePartitionParam<LocalDate, P>>
+public class XFixedRateLocalDatePartitionFunction<T ,P extends XFixedRatePartitionFunction.Param<LocalDate, P>>
         extends XFixedRatePartitionFunction<T, LocalDate, P> {
 
     private final TemporalUnit unit;
 
-    public LocalDatePartitionFunction(P sourceParam, int partitionSize,
-                                      TemporalUnit unit, Function<P, List<T>> queryFunction) {
+    public XFixedRateLocalDatePartitionFunction(P sourceParam, int partitionSize,
+                                                TemporalUnit unit, Function<P, List<T>> queryFunction) {
         super(sourceParam, partitionSize, queryFunction);
         if (unit == null){
             throw new IllegalArgumentException();

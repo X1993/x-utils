@@ -17,11 +17,11 @@ import java.util.Collections;
  * @date 2023/8/14
  * @description
  */
-public class LocalDateTimePartitionFunctionTest {
+public class XFixedRateLocalDateTimePartitionFunctionTest {
 
     @Data
     @Accessors(chain = true)
-    class LocalDateTimeParam implements XFixedRatePartitionParam<LocalDateTime ,LocalDateTimeParam> {
+    class LocalDateTimeParam implements XFixedRatePartitionFunction.Param<LocalDateTime ,LocalDateTimeParam> {
 
         private LocalDateTime startTime;
 
@@ -49,7 +49,7 @@ public class LocalDateTimePartitionFunctionTest {
         LocalDateTime endTime = LocalDate.of(2023 ,1,10).atTime(LocalTime.MIN);
 
         XFixedRatePartitionFunction<Void ,LocalDateTime ,LocalDateTimeParam> partitionFunction =
-                new LocalDateTimePartitionFunction<>(
+                new XFixedRateLocalDateTimePartitionFunction<>(
                         new LocalDateTimeParam().setStartTime(startTime).setEndTime(endTime),
                         1 , ChronoUnit.DAYS ,p -> {
                     System.out.println(p);
