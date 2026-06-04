@@ -21,7 +21,7 @@ public class XFixedRateLocalDateTimePartitionFunctionTest {
 
     @Data
     @Accessors(chain = true)
-    class LocalDateTimeParam implements XFixedRatePartitionFunction.Param<LocalDateTime ,LocalDateTimeParam> {
+    class LocalDateTimeParam implements XPartitionParam<LocalDateTime ,LocalDateTimeParam> {
 
         private LocalDateTime startTime;
 

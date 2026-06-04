@@ -28,7 +28,7 @@ import java.util.function.Function;
  * <pre>{@code
  * // 1. 定义分片参数（实现 Param 接口）
  * record QueryParam(Long startId, Long endId)
- *         implements XOrderPartitionFunction.Param<Long, QueryParam> {
+ *         implements XPartitionParam<Long, QueryParam> {
  *     public Long $readStartBorder() { return startId; }
  *     public Long $readEndBorder() { return endId; }
  *     public QueryParam $partitionParam(Long s, Long e) { return new QueryParam(s, e); }
@@ -58,13 +58,13 @@ import java.util.function.Function;
  * @date 2026/6/1
  * @param <T> 分片查询的数据类型
  * @param <P_BORDER> 分片维度类型（如 Long、LocalDateTime）
- * @param <P> 分片查询参数的类型，必须实现 {@link Param}
+ * @param <P> 分片查询参数的类型，必须实现 {@link XPartitionParam}
  * @see XFixedRatePartitionFunction
  * @see com.github.util.structure.iterator.partition.XPartitionIterable
  */
 @Data
 @Accessors(chain = true)
-public abstract class XOrderPartitionFunction<T ,P_BORDER, P extends XOrderPartitionFunction.Param<P_BORDER, P>>
+public abstract class XOrderPartitionFunction<T ,P_BORDER, P extends XPartitionParam<P_BORDER, P>>
         implements XPartitionFunction<T ,P> {
 
     /**
@@ -205,43 +205,6 @@ public abstract class XOrderPartitionFunction<T ,P_BORDER, P extends XOrderParti
                 }
             }
         }
-    }
-
-    /**
-     * 分片参数
-     * @author wangjj7
-     * @date 2026/6/1
-     * @description
-     * @param <BORDER> 分片的维度（单位）
-     */
-    public interface Param<BORDER, P extends XOrderPartitionFunction.Param<BORDER, P>> {
-
-        /**
-         * 获取开始边界
-         * @return
-         */
-        BORDER $readStartBorder();
-
-        /**
-         * 获取结束边界
-         * @return
-         */
-        BORDER $readEndBorder();
-
-        /**
-         * 获取分区参数
-         * @return
-         */
-        P $partitionParam(BORDER partitionStartBORDER, BORDER partitionEndBORDER);
-
-        /**
-         * 复制
-         * @return
-         */
-        default P copy(){
-            return $partitionParam($readStartBorder() , $readEndBorder());
-        }
-
     }
 
 }

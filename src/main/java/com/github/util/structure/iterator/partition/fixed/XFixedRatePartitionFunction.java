@@ -17,7 +17,7 @@ import java.util.function.Function;
  */
 @Data
 @Accessors(chain = true)
-public abstract class XFixedRatePartitionFunction<T , P_BORDER, P extends XFixedRatePartitionFunction.Param<P_BORDER, P>>
+public abstract class XFixedRatePartitionFunction<T , P_BORDER, P extends XPartitionParam<P_BORDER, P>>
         implements XPartitionFunction<T ,P> {
 
     /**
@@ -154,43 +154,6 @@ public abstract class XFixedRatePartitionFunction<T , P_BORDER, P extends XFixed
         }else {
             return compare(param0.$readStartBorder() ,sourceParam.$readStartBorder()) > 0;
         }
-    }
-
-    /**
-     * 分片参数
-     * @author wangjj7
-     * @date 2023/8/9
-     * @description
-     * @param <P_BORDER> 分片的维度（单位）
-     */
-    public interface Param<P_BORDER,P extends Param<P_BORDER, P>> {
-
-        /**
-         * 获取开始边界
-         * @return
-         */
-        P_BORDER $readStartBorder();
-
-        /**
-         * 设置结束边界
-         * @return
-         */
-        P_BORDER $readEndBorder();
-
-        /**
-         * 获取分区参数
-         * @return
-         */
-        P $partitionParam(P_BORDER partitionStartPBORDER, P_BORDER partitionEndPBORDER);
-
-        /**
-         * 复制
-         * @return
-         */
-        default P copy(){
-            return $partitionParam($readStartBorder() , $readEndBorder());
-        }
-
     }
 
 }

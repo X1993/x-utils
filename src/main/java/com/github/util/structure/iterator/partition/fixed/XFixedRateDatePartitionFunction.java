@@ -10,7 +10,7 @@ import java.util.function.Function;
  * @date 2023/8/14
  * @description
  */
-public class XFixedRateDatePartitionFunction<T ,P extends XFixedRatePartitionFunction.Param<Date, P>>
+public class XFixedRateDatePartitionFunction<T ,P extends XPartitionParam<Date, P>>
         extends XFixedRatePartitionFunction<T, Date, P> {
 
     private final TimeUnit timeUnit;
