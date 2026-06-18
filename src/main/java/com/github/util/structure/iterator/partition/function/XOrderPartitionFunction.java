@@ -1,10 +1,12 @@
-package com.github.util.structure.iterator.partition.fixed;
+package com.github.util.structure.iterator.partition.function;
 
 import com.github.util.structure.iterator.partition.XPartitionFunction;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -64,7 +66,7 @@ import java.util.function.Function;
  */
 @Data
 @Accessors(chain = true)
-public abstract class XOrderPartitionFunction<T ,P_BORDER, P extends XPartitionParam<P_BORDER, P>>
+public class XOrderPartitionFunction<T ,P_BORDER, P extends XPartitionParam<P_BORDER, P>>
         implements XPartitionFunction<T ,P> {
 
     /**
@@ -92,7 +94,17 @@ public abstract class XOrderPartitionFunction<T ,P_BORDER, P extends XPartitionP
      * <p>设计目的：有些接口是按维度范围 [startBorder, endBorder] 查询的且包含两端，
      * 如果不设置间隔，边界值会重复查询。设置后下一片的起始边界会偏移该间隔。</p>
      */
-    private long partitionInterval = 0;
+    private int partitionInterval = 0;
+
+    /**
+     * 分片大小增加函数
+     */
+    private final BiFunction<P_BORDER ,Integer ,P_BORDER> plusFunction;
+
+    /**
+     * 分片大小比较函数
+     */
+    private final Comparator<P_BORDER> comparator;
 
     /**
      * true:升序加载
@@ -100,34 +112,24 @@ public abstract class XOrderPartitionFunction<T ,P_BORDER, P extends XPartitionP
      */
     private boolean asc = true;
 
-    public XOrderPartitionFunction(P sourceParam, Function<T , P_BORDER> borderFunction ,
-                                   Function<P, List<T>> queryFunction ,int maxElementCnt)
+    public XOrderPartitionFunction(P sourceParam, Function<T ,P_BORDER> borderFunction ,
+                                   Function<P, List<T>> queryFunction ,int maxElementCnt,
+                                   BiFunction<P_BORDER ,Integer ,P_BORDER> plusFunction,
+                                   Comparator<P_BORDER> comparator)
     {
         if (sourceParam == null || sourceParam.$readStartBorder() == null || sourceParam.$readEndBorder() == null
-                || borderFunction == null || queryFunction == null || maxElementCnt < 2) {
+                || borderFunction == null || queryFunction == null || maxElementCnt < 2
+                || plusFunction == null || comparator == null)
+        {
             throw new IllegalArgumentException();
         }
         this.sourceParam = sourceParam;
         this.borderFunction = borderFunction;
         this.queryFunction = queryFunction;
         this.maxElementCnt = maxElementCnt;
+        this.plusFunction = plusFunction;
+        this.comparator = comparator;
     }
-
-    /**
-     * 维度增加若干个单位
-     * @param P_BORDER 原始维度值
-     * @param amountToAdd 增加量（可为负数）
-     * @return 增加后的维度值
-     */
-    abstract P_BORDER plus(P_BORDER P_BORDER, long amountToAdd);
-
-    /**
-     * 比较两个维度的大小
-     * @param PBORDER0
-     * @param PBORDER1
-     * @return
-     */
-    abstract int compare(P_BORDER PBORDER0, P_BORDER PBORDER1);
 
     @Override
     public Output<T, P> select(Input<T, P> input)
@@ -137,7 +139,7 @@ public abstract class XOrderPartitionFunction<T ,P_BORDER, P extends XPartitionP
             throw new IllegalStateException();
         }
 
-        if (compare(currentParam.$readStartBorder() ,currentParam.$readEndBorder()) > 0)
+        if (comparator.compare(currentParam.$readStartBorder() ,currentParam.$readEndBorder()) > 0)
         {
             throw new IllegalStateException("分片开始边界不能大于结束边界");
         }
@@ -169,7 +171,7 @@ public abstract class XOrderPartitionFunction<T ,P_BORDER, P extends XPartitionP
         while (!partitionList.isEmpty()){
             T lastElement = partitionList.remove(partitionList.size() - 1);
             P_BORDER border = borderFunction.apply(lastElement);
-            if (compare(border ,endBorder) != 0){
+            if (comparator.compare(border ,endBorder) != 0){
                 partitionList.add(lastElement);
                 break;
             }
@@ -181,7 +183,7 @@ public abstract class XOrderPartitionFunction<T ,P_BORDER, P extends XPartitionP
         return new Output<T ,P>()
                 .setPartition(partitionList)
                 .setHasNext(true)
-                .setNextParam(inputParam.$partitionParam(plus(endBorder, partitionInterval) ,sourceParam.$readEndBorder()));
+                .setNextParam(inputParam.$partitionParam(plusFunction.apply(endBorder, partitionInterval) ,sourceParam.$readEndBorder()));
     }
 
     @Override
@@ -194,13 +196,13 @@ public abstract class XOrderPartitionFunction<T ,P_BORDER, P extends XPartitionP
     private void validateOrder(List<T> resultList){
         if (asc) {
             for (int i = 1; i < resultList.size(); i++) {
-                if (compare(borderFunction.apply(resultList.get(i - 1)) ,borderFunction.apply(resultList.get(i))) > 0) {
+                if (comparator.compare(borderFunction.apply(resultList.get(i - 1)) ,borderFunction.apply(resultList.get(i))) > 0) {
                     throw new IllegalStateException("分片查询结果非单调递增");
                 }
             }
         }else {
             for (int i = 1; i < resultList.size(); i++) {
-                if (compare(borderFunction.apply(resultList.get(i - 1)) ,borderFunction.apply(resultList.get(i))) < 0) {
+                if (comparator.compare(borderFunction.apply(resultList.get(i - 1)) ,borderFunction.apply(resultList.get(i))) < 0) {
                     throw new IllegalStateException("分片查询结果非单调递减");
                 }
             }

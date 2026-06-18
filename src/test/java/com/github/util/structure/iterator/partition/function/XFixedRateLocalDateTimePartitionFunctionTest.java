@@ -1,4 +1,4 @@
-package com.github.util.structure.iterator.partition.fixed;
+package com.github.util.structure.iterator.partition.function;
 
 
 import com.github.util.structure.iterator.partition.XPartitionFunction;
@@ -49,7 +49,7 @@ public class XFixedRateLocalDateTimePartitionFunctionTest {
         LocalDateTime endTime = LocalDate.of(2023 ,1,10).atTime(LocalTime.MIN);
 
         XFixedRatePartitionFunction<Void ,LocalDateTime ,LocalDateTimeParam> partitionFunction =
-                new XFixedRateLocalDateTimePartitionFunction<>(
+                XPartitionFunctionUtils.toFixedLocalDateTimeRatePartitionFunction(
                         new LocalDateTimeParam().setStartTime(startTime).setEndTime(endTime),
                         1 , ChronoUnit.DAYS ,p -> {
                     System.out.println(p);

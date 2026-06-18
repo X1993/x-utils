@@ -1,9 +1,11 @@
-package com.github.util.structure.iterator.partition.fixed;
+package com.github.util.structure.iterator.partition.function;
 
 import com.github.util.structure.iterator.partition.XPartitionFunction;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import java.util.Comparator;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -17,7 +19,7 @@ import java.util.function.Function;
  */
 @Data
 @Accessors(chain = true)
-public abstract class XFixedRatePartitionFunction<T , P_BORDER, P extends XPartitionParam<P_BORDER, P>>
+public class XFixedRatePartitionFunction<T , P_BORDER, P extends XPartitionParam<P_BORDER, P>>
         implements XPartitionFunction<T ,P> {
 
     /**
@@ -28,7 +30,7 @@ public abstract class XFixedRatePartitionFunction<T , P_BORDER, P extends XParti
     /**
      * 分片大小
      */
-    private final long partitionSize;
+    private final int partitionSize;
 
     /**
      * 分片查询函数
@@ -36,10 +38,20 @@ public abstract class XFixedRatePartitionFunction<T , P_BORDER, P extends XParti
     private final Function<P ,List<T>> queryFunction;
 
     /**
+     * 分片大小增加函数
+     */
+    private final BiFunction<P_BORDER ,Integer ,P_BORDER> plusFunction;
+
+    /**
+     * 分片大小比较函数
+     */
+    private final Comparator<P_BORDER> comparator;
+
+    /**
      * 分片间隔
      * 设计目的：有些接口是按维度范围[startBorder, endBorder]查询的且包含两端，如果不设置间隔边界值会重复查询
      */
-    private long partitionInterval = 0;
+    private int partitionInterval = 0;
 
     /**
      * true:升序加载
@@ -47,33 +59,21 @@ public abstract class XFixedRatePartitionFunction<T , P_BORDER, P extends XParti
      */
     private boolean asc = true;
 
-
-    public XFixedRatePartitionFunction(P sourceParam, int partitionSize, Function<P, List<T>> queryFunction)
+    public XFixedRatePartitionFunction(P sourceParam, int partitionSize,
+                                       Function<P, List<T>> queryFunction ,
+                                       BiFunction<P_BORDER ,Integer ,P_BORDER> plusFunction,
+                                       Comparator<P_BORDER> comparator)
     {
         if (sourceParam == null || sourceParam.$readStartBorder() == null || sourceParam.$readEndBorder() == null
-                || partitionSize < 1 || queryFunction == null) {
+                || partitionSize < 1 || queryFunction == null || plusFunction == null || comparator == null) {
             throw new IllegalArgumentException();
         }
         this.sourceParam = sourceParam;
         this.partitionSize = partitionSize;
         this.queryFunction = queryFunction;
+        this.plusFunction = plusFunction;
+        this.comparator = comparator;
     }
-
-    /**
-     * 维度增加若干个单位
-     * @param P_BORDER
-     * @param amountToAdd
-     * @return
-     */
-    abstract P_BORDER plus(P_BORDER P_BORDER, long amountToAdd);
-
-    /**
-     * 比较两个维度的大小
-     * @param PBORDER0
-     * @param PBORDER1
-     * @return
-     */
-    abstract int compare(P_BORDER PBORDER0, P_BORDER PBORDER1);
 
     @Override
     public Output<T, P> select(Input<T, P> input)
@@ -83,7 +83,7 @@ public abstract class XFixedRatePartitionFunction<T , P_BORDER, P extends XParti
             throw new IllegalStateException();
         }
 
-        if (compare(currentParam.$readStartBorder() ,currentParam.$readEndBorder()) > 0)
+        if (comparator.compare(currentParam.$readStartBorder() ,currentParam.$readEndBorder()) > 0)
         {
             throw new IllegalStateException("分片开始时间不能大于结束时间");
         }
@@ -108,13 +108,13 @@ public abstract class XFixedRatePartitionFunction<T , P_BORDER, P extends XParti
         P_BORDER partitionEnd = null;
         if (asc) {
             partitionStart = sourceParam.$readStartBorder();
-            partitionEnd = plus(partitionStart ,partitionSize);
-            partitionEnd = compare(partitionEnd ,sourceParam.$readEndBorder()) < 0 ?
+            partitionEnd = plusFunction.apply(partitionStart ,partitionSize);
+            partitionEnd = comparator.compare(partitionEnd ,sourceParam.$readEndBorder()) < 0 ?
                     partitionEnd : sourceParam.$readEndBorder();
         }else {
             partitionEnd = sourceParam.$readEndBorder();
-            partitionStart = plus(partitionEnd ,-partitionSize);
-            partitionStart = compare(partitionStart ,sourceParam.$readStartBorder()) > 0 ?
+            partitionStart = plusFunction.apply(partitionEnd ,-partitionSize);
+            partitionStart = comparator.compare(partitionStart ,sourceParam.$readStartBorder()) > 0 ?
                     partitionStart : sourceParam.$readStartBorder();
         }
         return sourceParam.$partitionParam(partitionStart ,partitionEnd);
@@ -130,18 +130,18 @@ public abstract class XFixedRatePartitionFunction<T , P_BORDER, P extends XParti
         P_BORDER partitionStart = null;
         P_BORDER partitionEnd = null;
         if (asc) {
-            partitionStart = plus(param0.$readEndBorder() ,partitionInterval);
-            partitionStart = compare(partitionStart ,sourceParam.$readEndBorder()) < 0 ?
+            partitionStart = plusFunction.apply(param0.$readEndBorder() ,partitionInterval);
+            partitionStart = comparator.compare(partitionStart ,sourceParam.$readEndBorder()) < 0 ?
                     partitionStart : sourceParam.$readEndBorder();
-            partitionEnd = plus(partitionStart ,partitionSize);
-            partitionEnd = compare(partitionEnd ,sourceParam.$readEndBorder()) < 0 ?
+            partitionEnd = plusFunction.apply(partitionStart ,partitionSize);
+            partitionEnd = comparator.compare(partitionEnd ,sourceParam.$readEndBorder()) < 0 ?
                     partitionEnd : sourceParam.$readEndBorder();
         }else {
-            partitionEnd = plus(param0.$readStartBorder() ,-partitionInterval);
-            partitionEnd = compare(partitionEnd ,sourceParam.$readStartBorder()) > 0 ?
+            partitionEnd = plusFunction.apply(param0.$readStartBorder() ,-partitionInterval);
+            partitionEnd = comparator.compare(partitionEnd ,sourceParam.$readStartBorder()) > 0 ?
                     partitionEnd : sourceParam.$readStartBorder();
-            partitionStart = plus(partitionEnd ,-partitionSize);
-            partitionStart = compare(partitionStart ,sourceParam.$readStartBorder()) > 0 ?
+            partitionStart = plusFunction.apply(partitionEnd ,-partitionSize);
+            partitionStart = comparator.compare(partitionStart ,sourceParam.$readStartBorder()) > 0 ?
                     partitionStart : sourceParam.$readStartBorder();
         }
         return sourceParam.$partitionParam(partitionStart ,partitionEnd);
@@ -150,9 +150,9 @@ public abstract class XFixedRatePartitionFunction<T , P_BORDER, P extends XParti
     //是否有下一个分片
     private boolean hasNextPartition(P param0){
         if (asc){
-            return compare(param0.$readEndBorder() ,sourceParam.$readEndBorder()) < 0;
+            return comparator.compare(param0.$readEndBorder() ,sourceParam.$readEndBorder()) < 0;
         }else {
-            return compare(param0.$readStartBorder() ,sourceParam.$readStartBorder()) > 0;
+            return comparator.compare(param0.$readStartBorder() ,sourceParam.$readStartBorder()) > 0;
         }
     }
 

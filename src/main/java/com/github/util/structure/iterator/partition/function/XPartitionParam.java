@@ -1,4 +1,4 @@
-package com.github.util.structure.iterator.partition.fixed;
+package com.github.util.structure.iterator.partition.function;
 
 
 /**
