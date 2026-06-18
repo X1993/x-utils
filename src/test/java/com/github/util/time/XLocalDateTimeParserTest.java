@@ -580,4 +580,75 @@ class XLocalDateTimeParserTest {
         assertThrows(DateTimeParseException.class, () -> parser.parse("abc-def"));
         assertThrows(DateTimeParseException.class, () -> parser.parse(""));
     }
+
+    // ==================== 纯日期格式测试 ====================
+
+    @Test
+    @DisplayName("日期格式：yyyy-MM-dd")
+    void testDateOnlyHyphen() {
+        XLocalDateTimeParser parser = XLocalDateTimeParser.getDefault();
+
+        assertEquals(LocalDateTime.of(2024, 3, 15, 0, 0, 0),
+                parser.parse("2024-03-15"));
+    }
+
+    @Test
+    @DisplayName("日期格式：yyyy/MM/dd")
+    void testDateOnlySlash() {
+        XLocalDateTimeParser parser = XLocalDateTimeParser.getDefault();
+
+        assertEquals(LocalDateTime.of(2024, 3, 15, 0, 0, 0),
+                parser.parse("2024/03/15"));
+    }
+
+    @Test
+    @DisplayName("日期格式：yyyy.MM.dd")
+    void testDateOnlyDot() {
+        XLocalDateTimeParser parser = XLocalDateTimeParser.getDefault();
+
+        assertEquals(LocalDateTime.of(2024, 3, 15, 0, 0, 0),
+                parser.parse("2024.03.15"));
+    }
+
+    @Test
+    @DisplayName("日期格式：yyyyMMdd")
+    void testDateOnlyCompact() {
+        XLocalDateTimeParser parser = XLocalDateTimeParser.getDefault();
+
+        assertEquals(LocalDateTime.of(2024, 3, 15, 0, 0, 0),
+                parser.parse("20240315"));
+    }
+
+    @Test
+    @DisplayName("日期格式：yyyy年MM月dd日")
+    void testDateOnlyChineseFull() {
+        XLocalDateTimeParser parser = XLocalDateTimeParser.getDefault();
+
+        assertEquals(LocalDateTime.of(2024, 3, 15, 0, 0, 0),
+                parser.parse("2024年03月15日"));
+    }
+
+    @Test
+    @DisplayName("日期格式：yyyy年M月d日")
+    void testDateOnlyChineseShort() {
+        XLocalDateTimeParser parser = XLocalDateTimeParser.getDefault();
+
+        assertEquals(LocalDateTime.of(2024, 3, 5, 0, 0, 0),
+                parser.parse("2024年3月5日"));
+    }
+
+    @Test
+    @DisplayName("日期格式：getPattern — 仅无分隔符格式在树中，其余走兜底")
+    void testDateOnlyGetPattern() {
+        XLocalDateTimeParser parser = XLocalDateTimeParser.getDefault();
+
+        // 兜底可解析的格式不在前缀树中，getPattern 返回 null
+        assertNull(parser.getPattern("2024-03-15"));
+        assertNull(parser.getPattern("2024/03/15"));
+        assertNull(parser.getPattern("2024.03.15"));
+        assertNull(parser.getPattern("2024年03月15日"));
+        assertNull(parser.getPattern("2024年3月5日"));
+        // 仅 yyyyMMdd 在前缀树中
+        assertEquals("yyyyMMdd", parser.getPattern("20240315"));
+    }
 }

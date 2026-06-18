@@ -1,5 +1,6 @@
 package com.github.util.time;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -97,6 +98,16 @@ public class XLocalDateTimeParser {
     }
 
     /**
+     * 格式类型：日期时间 / 纯日期
+     */
+    private enum PatternType {
+        /** 日期时间（含时分秒） */
+        DATE_TIME,
+        /** 纯日期（无时分秒） */
+        DATE
+    }
+
+    /**
      * 前缀树节点
      */
     private static class TrieNode {
@@ -108,6 +119,8 @@ public class XLocalDateTimeParser {
         DateTimeFormatter formatter;
         // 叶子节点存储原始模式字符串
         String pattern;
+        // 叶子节点存储格式类型
+        PatternType patternType;
         // 该节点及其子节点下的格式化器总数
         int formatterCount;
     }
@@ -127,36 +140,38 @@ public class XLocalDateTimeParser {
     private static final String[] DEFAULT_PATTERNS = {
         // 标准格式
         "yyyy-MM-dd HH:mm:ss",
-        "yyyy-MM-dd HH:mm",
-        "yyyy-MM-dd H:m:s",
-        "yyyy-MM-dd H:m",
-        // 斜杠分隔
-        "yyyy/MM/dd HH:mm:ss",
-        "yyyy/MM/dd HH:mm",
-        "yyyy/MM/dd H:m:s",
-        "yyyy/MM/dd H:m",
-        // 点分隔
-        "yyyy.MM.dd HH:mm:ss",
-        "yyyy.MM.dd HH:mm",
-        "yyyy.MM.dd H:m:s",
-        "yyyy.MM.dd H:m",
+//        "yyyy-MM-dd HH:mm",
+//        "yyyy-MM-dd H:m:s",
+//        "yyyy-MM-dd H:m",
+//        // 斜杠分隔
+//        "yyyy/MM/dd HH:mm:ss",
+//        "yyyy/MM/dd HH:mm",
+//        "yyyy/MM/dd H:m:s",
+//        "yyyy/MM/dd H:m",
+//        // 点分隔
+//        "yyyy.MM.dd HH:mm:ss",
+//        "yyyy.MM.dd HH:mm",
+//        "yyyy.MM.dd H:m:s",
+//        "yyyy.MM.dd H:m",
         // 无分隔符
         "yyyyMMddHHmmss",
         "yyyyMMddHHmm",
-        // ISO 格式
-        "yyyy-MM-dd'T'HH:mm:ss",
-        "yyyy-MM-dd'T'HH:mm",
-        // 带毫秒
+//        // ISO 格式
+//        "yyyy-MM-dd'T'HH:mm:ss",
+//        "yyyy-MM-dd'T'HH:mm",
+        // 带毫秒（兜底无法正确处理小数秒语义：.1 应=100ms 而非 1ms）
         "yyyy-MM-dd HH:mm:ss.SSS",
         "yyyy-MM-dd HH:mm:ss.S",
         // ISO 格式带毫秒
         "yyyy-MM-dd'T'HH:mm:ss.SSS",
         "yyyy-MM-dd'T'HH:mm:ss.S",
-        // 中文格式
-        "yyyy年MM月dd日 HH时mm分ss秒",
-        "yyyy年MM月dd日 HH时mm分",
-        "yyyy年M月d日 H时m分s秒",
-        "yyyy年M月d日 H时m分"
+//        // 中文格式
+//        "yyyy年MM月dd日 HH时mm分ss秒",
+//        "yyyy年MM月dd日 HH时mm分",
+//        "yyyy年M月d日 H时m分s秒",
+//        "yyyy年M月d日 H时m分",
+        // 纯日期格式（仅保留兜底无法处理的无分隔符格式）
+        "yyyyMMdd"
     };
 
     private static final XLocalDateTimeParser INSTANCE = new Builder().addPatterns(DEFAULT_PATTERNS).build();
@@ -194,11 +209,34 @@ public class XLocalDateTimeParser {
         }
         node.formatter = DateTimeFormatter.ofPattern(pattern);
         node.pattern = pattern;
+        node.patternType = detectPatternType(pattern);
 
         // 更新路径上所有节点的 formatterCount
         for (TrieNode pathNode : path) {
             pathNode.formatterCount++;
         }
+    }
+
+    /**
+     * 自动检测模式类型：含时分秒则为 DATE_TIME，否则为 DATE
+     */
+    private static PatternType detectPatternType(String pattern) {
+        boolean inQuote = false;
+        for (int i = 0; i < pattern.length(); i++) {
+            char c = pattern.charAt(i);
+            if (c == '\'') {
+                inQuote = !inQuote;
+                continue;
+            }
+            if (inQuote) {
+                continue;
+            }
+            // H=小时, m=分钟, s=秒, S=毫秒 — 只要出现任意一个时间成分即为日期时间
+            if (c == 'H' || c == 'm' || c == 's' || c == 'S') {
+                return PatternType.DATE_TIME;
+            }
+        }
+        return PatternType.DATE;
     }
 
     /**
@@ -361,6 +399,9 @@ public class XLocalDateTimeParser {
         TrieNode matchedNode = matchNode(normalized);
         if (matchedNode != null) {
             try {
+                if (matchedNode.patternType == PatternType.DATE) {
+                    return LocalDate.parse(normalized, matchedNode.formatter).atStartOfDay();
+                }
                 return LocalDateTime.parse(normalized, matchedNode.formatter);
             } catch (DateTimeParseException ignored) {
                 // 前缀树匹配失败，尝试默认解析
