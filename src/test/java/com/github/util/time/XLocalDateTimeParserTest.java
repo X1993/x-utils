@@ -275,7 +275,9 @@ class XLocalDateTimeParserTest {
 
         assertThrows(DateTimeParseException.class, () -> parser.parse("2024-13-01 12:00:00")); // 无效月份
         assertThrows(DateTimeParseException.class, () -> parser.parse("invalid"));              // 无效格式
-        assertThrows(DateTimeParseException.class, () -> parser.parse("2024-03-15"));           // 仅日期，不是日期时间格式
+        // 仅日期可通过兜底解析补齐时间为 00:00
+        assertEquals(LocalDateTime.of(2024, 3, 15, 0, 0, 0),
+                parser.parse("2024-03-15"));
     }
 
     // ==================== 安全解析测试 ====================
@@ -388,14 +390,15 @@ class XLocalDateTimeParserTest {
     }
 
     @Test
-    @DisplayName("Builder：移除格式")
+    @DisplayName("Builder：移除格式后通过兜底解析")
     void testBuilderRemovePattern() {
         XLocalDateTimeParser parser = XLocalDateTimeParser.builder()
                 .removePattern("yyyy-MM-dd HH:mm:ss")
                 .build();
 
-        // 移除后应该无法解析该格式（或由其他相似格式匹配）
-        assertThrows(DateTimeParseException.class, () -> parser.parse("2024-03-15 14:30:00"));
+        // 移除后前缀树无法匹配，但兜底解析仍可解析
+        assertEquals(LocalDateTime.of(2024, 3, 15, 14, 30, 0),
+                parser.parse("2024-03-15 14:30:00"));
     }
 
     @Test
@@ -485,7 +488,96 @@ class XLocalDateTimeParserTest {
     void testParseTimeOnlyShouldFail() {
         XLocalDateTimeParser parser = XLocalDateTimeParser.getDefault();
 
-        // 仅时间格式不在默认支持列表中
+        // 仅时间格式不在默认支持列表中，兜底解析会将数字组解析为年/月/...，月份无效
         assertThrows(DateTimeParseException.class, () -> parser.parse("14:30:00"));
+    }
+
+    // ==================== 兜底解析测试 ====================
+
+    @Test
+    @DisplayName("兜底解析：未注册的分隔符格式")
+    void testFallbackUnregisteredDelimiter() {
+        XLocalDateTimeParser parser = XLocalDateTimeParser.getDefault();
+
+        // 下划线分隔的日期时间（未注册格式，走兜底）
+        assertEquals(LocalDateTime.of(2024, 3, 15, 14, 30, 45),
+                parser.parse("2024_03_15_14_30_45"));
+    }
+
+    @Test
+    @DisplayName("兜底解析：仅日期补齐时间为0")
+    void testFallbackDateOnly() {
+        XLocalDateTimeParser parser = XLocalDateTimeParser.getDefault();
+
+        assertEquals(LocalDateTime.of(2024, 3, 15, 0, 0, 0),
+                parser.parse("2024-03-15"));
+        assertEquals(LocalDateTime.of(2024, 3, 15, 0, 0, 0),
+                parser.parse("2024/03/15"));
+    }
+
+    @Test
+    @DisplayName("兜底解析：日期+时分补齐秒为0")
+    void testFallbackDateHourMinute() {
+        XLocalDateTimeParser parser = XLocalDateTimeParser.getDefault();
+
+        assertEquals(LocalDateTime.of(2024, 3, 15, 14, 30, 0),
+                parser.parse("2024=03=15=14=30"));
+    }
+
+    @Test
+    @DisplayName("兜底解析：日期+时分秒补齐毫秒为0")
+    void testFallbackDateToSecond() {
+        XLocalDateTimeParser parser = XLocalDateTimeParser.getDefault();
+
+        assertEquals(LocalDateTime.of(2024, 3, 15, 14, 30, 45),
+                parser.parse("2024#03#15#14#30#45"));
+    }
+
+    @Test
+    @DisplayName("兜底解析：混合非数字字符")
+    void testFallbackMixedDelimiters() {
+        XLocalDateTimeParser parser = XLocalDateTimeParser.getDefault();
+
+        // 混合分隔符：- . : 等均视为分隔符
+        assertEquals(LocalDateTime.of(2024, 3, 15, 14, 30, 45),
+                parser.parse("2024-03.15 abc 14:30:45"));
+    }
+
+    @Test
+    @DisplayName("兜底解析：仅年份")
+    void testFallbackYearOnly() {
+        XLocalDateTimeParser parser = XLocalDateTimeParser.getDefault();
+
+        assertEquals(LocalDateTime.of(2024, 1, 1, 0, 0, 0),
+                parser.parse("2024"));
+    }
+
+    @Test
+    @DisplayName("兜底解析：年月日+毫秒（需要中间0占位）")
+    void testFallbackYearMonthDayMillis() {
+        XLocalDateTimeParser parser = XLocalDateTimeParser.getDefault();
+
+        // 年月日 + 0时0分0秒 + 毫秒：用 0 占位中间字段
+        assertEquals(LocalDateTime.of(2024, 3, 15, 0, 0, 0, 500_000_000),
+                parser.parse("2024_03_15_0_0_0_500"));
+    }
+
+    @Test
+    @DisplayName("兜底解析：纯数字紧凑格式已在默认格式中")
+    void testFallbackCompactNumeric() {
+        XLocalDateTimeParser parser = XLocalDateTimeParser.getDefault();
+
+        // "yyyyMMddHHmmss" 已在默认格式中，前缀树直接匹配
+        assertEquals(LocalDateTime.of(2024, 3, 15, 14, 30, 30),
+                parser.parse("20240315143030"));
+    }
+
+    @Test
+    @DisplayName("兜底解析：无数字字符串抛出异常")
+    void testFallbackNoDigits() {
+        XLocalDateTimeParser parser = XLocalDateTimeParser.getDefault();
+
+        assertThrows(DateTimeParseException.class, () -> parser.parse("abc-def"));
+        assertThrows(DateTimeParseException.class, () -> parser.parse(""));
     }
 }

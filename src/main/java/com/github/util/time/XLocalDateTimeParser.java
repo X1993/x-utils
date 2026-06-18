@@ -290,43 +290,60 @@ public class XLocalDateTimeParser {
 
     /**
      * 去除字符串末尾的时区偏移信息（LocalDateTime 不含时区，直接丢弃）
-     * <p>支持格式：Z、+/-HHMM、+/-HH:MM、+/-HH</p>
+     * <p>支持格式：Z </p>
      */
     private static String stripZoneOffset(String str) {
         if (str.endsWith("Z")) {
             return str.substring(0, str.length() - 1);
         }
-        int len = str.length();
-        // 从最长模式开始检查，避免歧义
-        // +/-HH:MM (sign + 5 chars = 6)
-        if (len >= 6) {
-            char s = str.charAt(len - 6);
-            if ((s == '+' || s == '-')
-                    && Character.isDigit(str.charAt(len - 5)) && Character.isDigit(str.charAt(len - 4))
-                    && str.charAt(len - 3) == ':'
-                    && Character.isDigit(str.charAt(len - 2)) && Character.isDigit(str.charAt(len - 1))) {
-                return str.substring(0, len - 6);
-            }
-        }
-        // +/-HHMM (sign + 4 chars = 5)
-        if (len >= 5) {
-            char s = str.charAt(len - 5);
-            if ((s == '+' || s == '-')
-                    && Character.isDigit(str.charAt(len - 4)) && Character.isDigit(str.charAt(len - 3))
-                    && Character.isDigit(str.charAt(len - 2)) && Character.isDigit(str.charAt(len - 1))) {
-                return str.substring(0, len - 5);
-            }
-        }
-        // +/-HH (sign + 2 chars = 3)
-        if (len >= 3) {
-            char s = str.charAt(len - 3);
-            if ((s == '+' || s == '-')
-                    && Character.isDigit(str.charAt(len - 2)) && Character.isDigit(str.charAt(len - 1))) {
-                return str.substring(0, len - 3);
-            }
-        }
+//        int len = str.length();
+//        // 从最长模式开始检查，避免歧义
+//        // +/-HH:MM (sign + 5 chars = 6)
+//        if (len >= 6) {
+//            char s = str.charAt(len - 6);
+//            if ((s == '+' || s == '-')
+//                    && Character.isDigit(str.charAt(len - 5)) && Character.isDigit(str.charAt(len - 4))
+//                    && str.charAt(len - 3) == ':'
+//                    && Character.isDigit(str.charAt(len - 2)) && Character.isDigit(str.charAt(len - 1))) {
+//                return str.substring(0, len - 6);
+//            }
+//        }
+//        // +/-HHMM (sign + 4 chars = 5)
+//        if (len >= 5) {
+//            char s = str.charAt(len - 5);
+//            if ((s == '+' || s == '-')
+//                    && Character.isDigit(str.charAt(len - 4)) && Character.isDigit(str.charAt(len - 3))
+//                    && Character.isDigit(str.charAt(len - 2)) && Character.isDigit(str.charAt(len - 1))) {
+//                return str.substring(0, len - 5);
+//            }
+//        }
+//        // +/-HH (sign + 2 chars = 3)，需要排除日期分隔符（如 "2024-03-15" 中的 "-15"）
+//        if (len >= 8) {
+//            char s = str.charAt(len - 3);
+//            if ((s == '+' || s == '-')
+//                    && Character.isDigit(str.charAt(len - 2)) && Character.isDigit(str.charAt(len - 1))
+//                    && Character.isDigit(str.charAt(len - 4))
+//                    && Character.isDigit(str.charAt(len - 5))
+//                    // 检查前 5 个字符范围内是否含日期分隔符（- / .），若存在则说明是日期部分
+//                    && !containsDateSeparator(str, len - 8, len - 4)) {
+//                return str.substring(0, len - 3);
+//            }
+//        }
         return str;
     }
+
+//    /**
+//     * 检查指定范围内是否包含日期分隔符（- / .），用于区分日期部分和时区偏移
+//     */
+//    private static boolean containsDateSeparator(String str, int from, int to) {
+//        for (int i = from; i <= to; i++) {
+//            char c = str.charAt(i);
+//            if (c == '-' || c == '/' || c == '.') {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
     /**
      * 解析日期时间字符串为 LocalDateTime
@@ -346,11 +363,52 @@ public class XLocalDateTimeParser {
             try {
                 return LocalDateTime.parse(normalized, matchedNode.formatter);
             } catch (DateTimeParseException ignored) {
-                // 前缀树匹配失败
+                // 前缀树匹配失败，尝试默认解析
             }
         }
 
-        throw new DateTimeParseException("无法解析日期时间: " + dateTimeStr, dateTimeStr, 0);
+        // 默认解析：按数字序列依次解析
+        try {
+            return parseFallback(normalized);
+        } catch (Exception e) {
+            throw new DateTimeParseException("无法解析日期时间: " + dateTimeStr, dateTimeStr, 0);
+        }
+    }
+
+    /**
+     * 默认兜底解析：提取所有数字组，按 年、月、日、时、分、秒、毫秒 顺序依次赋值。
+     * 缺失的字段默认为 0，月/日为 0 时重置为最小值 1。
+     */
+    private LocalDateTime parseFallback(String dateTimeStr) {
+        // 提取所有连续数字序列
+        List<Integer> numbers = new ArrayList<>();
+        StringBuilder numBuf = new StringBuilder();
+        for (int i = 0; i < dateTimeStr.length(); i++) {
+            char c = dateTimeStr.charAt(i);
+            if (Character.isDigit(c)) {
+                numBuf.append(c);
+            } else if (numBuf.length() > 0) {
+                numbers.add(Integer.parseInt(numBuf.toString()));
+                numBuf.setLength(0);
+            }
+        }
+        if (numBuf.length() > 0) {
+            numbers.add(Integer.parseInt(numBuf.toString()));
+        }
+
+        if (numbers.isEmpty()) {
+            throw new DateTimeParseException("未提取到任何数字", dateTimeStr, 0);
+        }
+
+        int year   = numbers.get(0);
+        int month  = numbers.size() > 1 ? Math.max(numbers.get(1), 1) : 1;
+        int day    = numbers.size() > 2 ? Math.max(numbers.get(2), 1) : 1;
+        int hour   = numbers.size() > 3 ? numbers.get(3) : 0;
+        int minute = numbers.size() > 4 ? numbers.get(4) : 0;
+        int second = numbers.size() > 5 ? numbers.get(5) : 0;
+        int nano   = numbers.size() > 6 ? numbers.get(6) * 1_000_000 : 0;
+
+        return LocalDateTime.of(year, month, day, hour, minute, second, nano);
     }
 
     /**
